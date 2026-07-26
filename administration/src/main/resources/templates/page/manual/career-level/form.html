@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="${isEdit} ? #{career-levels.edit} : #{career-levels.create}">Career level</h1>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{employee.project-saved})}"></div>
+
+    <form class="row g-3"
+          th:method="post"
+          th:object="${careerLevel}"
+          th:action="@{/career-levels}">
+
+        <input type="hidden" th:field="*{id}"/>
+
+        <div class="col-12">
+            <div class="form-check">
+                <input id="enabled" class="form-check-input" type="checkbox" th:field="*{enabled}">
+                <label class="form-check-label" for="enabled" th:text="#{career-levels.enabled}">Enabled</label>
+                <div class="text-danger small" th:if="${#fields.hasErrors('enabled')}" th:errors="*{enabled}"></div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="name" th:text="#{career-levels.name}">Name</label>
+            <input id="name" class="form-control" type="text" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="code" th:text="#{career-levels.code}">Code</label>
+            <input id="code" class="form-control" type="text" th:field="*{code}" th:classappend="${#fields.hasErrors('code')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="position" th:text="#{career-levels.position}">Position</label>
+            <input id="position" class="form-control" type="number" th:field="*{position}" th:classappend="${#fields.hasErrors('position')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('position')}" th:errors="*{position}"></div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-center gap-2">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/career-levels}" th:title="#{list}" th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+            <button type="submit" class="btn btn-outline-success btn-sm" th:title="#{save}" th:aria-label="#{save}">
+                <i class="fas fa-save"></i>
+            </button>
+            <button th:if="${isEdit}"
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#delete-modal"
+                    th:title="#{delete}"
+                    th:aria-label="#{delete}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{fragments/delete-modal :: deleteModal(${isEdit}, '/career-levels/' + ${careerLevel.id}, #{career-levels.delete-title}, #{career-levels.delete-confirm})}"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

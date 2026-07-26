@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="${isEdit} ? #{question.edit} : #{question.create}">Question</h1>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{employee.project-saved})}"></div>
+
+    <form class="row g-3"
+          th:method="post"
+          th:object="${question}"
+          th:action="@{/questions}">
+
+        <input type="hidden" th:field="*{id}"/>
+
+        <div class="col-12">
+            <div class="form-check">
+                <input id="enabled" class="form-check-input" type="checkbox" th:field="*{enabled}">
+                <label class="form-check-label" for="enabled" th:text="#{question.enabled}">Enabled</label>
+                <div class="text-danger small" th:if="${#fields.hasErrors('enabled')}" th:errors="*{enabled}"></div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="uuid" th:text="#{question.uuid}">UUID</label>
+            <input id="uuid" class="form-control" type="text" th:field="*{uuid}" th:classappend="${#fields.hasErrors('uuid')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('uuid')}" th:errors="*{uuid}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="projectRole" th:text="#{project-role}">Project role</label>
+            <select id="projectRole" class="form-select" th:field="*{projectRole}" th:classappend="${#fields.hasErrors('projectRole')} ? 'is-invalid'">
+                <option value=""></option>
+                <option th:each="role : ${projectRoles}"
+                        th:value="${role.id}"
+                        th:selected="${role.id == question.projectRole}"
+                        th:text="${role.value}">Role</option>
+            </select>
+            <div class="text-danger small" th:if="${#fields.hasErrors('projectRole')}" th:errors="*{projectRole}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="skill" th:text="#{question.skill}">Skill</label>
+            <select id="skill" class="form-select" th:field="*{skill}" th:classappend="${#fields.hasErrors('skill')} ? 'is-invalid'">
+                <option value=""></option>
+                <option th:each="skill : ${skills}"
+                        th:value="${skill.id}"
+                        th:selected="${skill.id == question.skill}"
+                        th:text="${skill.value}">Skill</option>
+            </select>
+            <div class="text-danger small" th:if="${#fields.hasErrors('skill')}" th:errors="*{skill}"></div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" for="areaKnowledge" th:text="#{question.area-knowledge}">Area knowledge</label>
+            <input id="areaKnowledge" class="form-control" type="text" th:field="*{areaKnowledge}" th:classappend="${#fields.hasErrors('areaKnowledge')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('areaKnowledge')}" th:errors="*{areaKnowledge}"></div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" for="section" th:text="#{question.section}">Section</label>
+            <input id="section" class="form-control" type="text" th:field="*{section}" th:classappend="${#fields.hasErrors('section')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('section')}" th:errors="*{section}"></div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" for="text" th:text="#{question.text}">Text</label>
+            <textarea id="text" class="form-control" rows="5" th:field="*{text}" th:classappend="${#fields.hasErrors('text')} ? 'is-invalid'"></textarea>
+            <div class="text-danger small" th:if="${#fields.hasErrors('text')}" th:errors="*{text}"></div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-center gap-2">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/questions}" th:title="#{list}" th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+            <button type="submit" class="btn btn-outline-success btn-sm" th:title="#{save}" th:aria-label="#{save}">
+                <i class="fas fa-save"></i>
+            </button>
+            <button th:if="${isEdit}"
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#delete-modal"
+                    th:title="#{delete}"
+                    th:aria-label="#{delete}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{fragments/delete-modal :: deleteModal(${isEdit}, '/questions/' + ${question.id} + '/delete', #{question.delete-title}, #{question.delete-confirm})}"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

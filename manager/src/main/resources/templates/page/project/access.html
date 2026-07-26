@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/manager-header :: manager-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-1" th:text="#{manager.project-access}">Project access</h1>
+            <div class="text-muted" th:text="${project.name}">Project</div>
+        </div>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/projects}"
+               th:title="#{list}"
+               th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/projects/{id}(id=${project.id})}"
+               th:title="#{edit}"
+               th:aria-label="#{edit}">
+                <i class="fas fa-pen"></i>
+            </a>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{manager.project-access-saved})}"></div>
+
+    <p class="text-muted" th:text="#{manager.project-access-description}">Select managers who can work with this project.</p>
+
+    <form method="post" th:action="@{/projects/{id}/access(id=${project.id})}">
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-outline-success btn-sm"
+                    type="submit"
+                    th:title="#{save}"
+                    th:aria-label="#{save}">
+                <i class="fas fa-save"></i>
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead>
+                <tr>
+                    <th scope="col" class="text-center"
+                        th:text="#{manager.project-access-allowed}">
+                        Access
+                    </th>
+                    <th scope="col" th:text="#{manager.manager-name}">
+                        Name
+                    </th>
+                    <th scope="col" th:text="#{username}">
+                        Username
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(managers)}">
+                    <td colspan="3"
+                        class="text-center text-muted py-4"
+                        th:text="#{manager.managers-empty}">
+                        No managers
+                    </td>
+                </tr>
+                <tr th:each="manager : ${managers}">
+                    <td class="text-center">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="managerIds"
+                               th:value="${manager.id}"
+                               th:checked="${manager.selected}"
+                               th:aria-label="#{manager.project-access-allowed}">
+                    </td>
+                    <td th:text="${manager.name}">Manager</td>
+                    <td th:text="${manager.username}">username</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </form>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
