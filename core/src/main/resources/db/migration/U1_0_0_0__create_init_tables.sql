@@ -1,0 +1,11 @@
+DROP TABLE staff_evaluation_answer;
+DROP TABLE staff_evaluation_user;
+DROP TABLE staff_evaluation_question;
+DROP TABLE question;
+DROP TABLE staff_evaluation;
+DROP TABLE user_role;
+DROP TABLE users;
+DROP TABLE career_level;
+DROP TABLE project_role;
+DROP TABLE skill;
+delete from flyway_schema_history where version in ('1.0.0.0');

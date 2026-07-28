@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="#{employees.tab}">Employees</h1>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-success btn-sm" th:href="@{/users/new}" th:title="#{add}">
+                <i class="fas fa-plus"></i>
+            </a>
+            <button class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#upload-employee-modal"
+                    th:title="#{upload-file}"
+                    th:aria-label="#{upload-file}">
+                <i class="fas fa-upload"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/users/download(search=${filter.search}, projectRole=${filter.projectRole})}"
+               th:title="#{download-file}">
+                <i class="fas fa-download"></i>
+            </a>
+        </div>
+    </div>
+
+    <form class="mb-3" method="get" th:action="@{/users}">
+        <div class="row g-2 mb-2 align-items-center">
+            <div class="col-md-12">
+                <label class="form-label" for="projectRole" th:text="#{project-role}">Project Role</label>
+                <select id="projectRole" name="projectRole" class="form-select" th:aria-label="#{project-role}">
+                    <option value="" th:text="#{filter.all-project-roles}">All project roles</option>
+                    <option th:each="role : ${projectRoles}"
+                            th:value="${role.id}"
+                            th:selected="${role.id == filter.projectRole}"
+                            th:text="${role.value}">Role</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <input name="search"
+                   type="search"
+                   class="form-control"
+                   th:value="${filter.search}"
+                   th:placeholder="#{filter.search}"
+                   th:aria-label="#{filter.search}">
+        </div>
+        <div class="d-flex justify-content-end mt-2">
+            <button class="btn btn-outline-primary btn-sm" type="submit" th:title="#{filter.search}" th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/users}"
+               th:title="#{reset-search}"
+               th:aria-label="#{reset-search}">
+                <i class="fa-solid fa-broom"></i>
+            </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+            <tr>
+                <th th:replace="~{fragments/sorting :: sorting('/users', 'id', #{employee.id})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/users', 'lastName', #{employee.last-name})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/users', 'middleName', #{employee.middle-name})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/users', 'firstName', #{employee.first-name})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/users', 'username', #{employee.username})}"></th>
+                <th scope="col" th:text="#{employee.user-roles}">Roles</th>
+                <th th:replace="~{fragments/sorting :: sorting('/users', 'projectRole', #{employee.project-role})}"></th>
+                <th scope="col" th:text="#{actions}">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${users.isEmpty()}">
+                <td colspan="8" class="text-center text-muted py-4" th:text="#{employees.empty}">No data</td>
+            </tr>
+            <tr th:each="user : ${users.content}">
+                <td th:text="${user.id}">id</td>
+                <td th:text="${user.lastName}">LastName</td>
+                <td th:text="${user.middleName}">MiddleName</td>
+                <td th:text="${user.firstName}">FirstName</td>
+                <td th:text="${user.username}">Username</td>
+                <td>
+                    <span class="badge text-bg-secondary"
+                          th:each="userRole : ${userRoles}"
+                          th:if="${user.userRoles != null ? #lists.contains(user.userRoles, userRole.code()) : false}"
+                          th:text="${userRole.value()}">
+                    </span>
+                </td>
+                <td th:each="projectRole : ${projectRoles}"
+                    th:if="${projectRole.id == user.projectRole}"
+                    th:text="${projectRole.value}">Project role</td>
+                <td th:if="${user.projectRole == null}"
+                    th:text="''">Project role</td>
+                <td>
+                    <div class="btn-group flex-nowrap" role="group">
+                        <a class="btn btn-outline-primary btn-sm"
+                           th:href="@{/users/{id}(id=${user.id})}"
+                           th:title="#{edit}"
+                           th:aria-label="#{edit}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:replace="~{fragments/paging :: paggination('/users')}"></div>
+</main>
+
+<div class="modal fade" id="upload-employee-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" method="post" enctype="multipart/form-data" th:action="@{/users/upload}">
+            <div class="modal-header">
+                <h5 class="modal-title" th:text="#{upload-employees}">Upload employees</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" th:aria-label="#{cancel}"></button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control"
+                       type="file"
+                       name="file"
+                       accept=".csv,text/csv"
+                       th:aria-label="#{upload-file}">
+            </div>
+            <div class="modal-footer d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:title="#{cancel}" th:aria-label="#{cancel}">
+                    <i class="fas fa-xmark"></i>
+                </button>
+                <button type="submit" class="btn btn-outline-primary btn-sm" th:title="#{upload-file}" th:aria-label="#{upload-file}">
+                    <i class="fas fa-upload"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

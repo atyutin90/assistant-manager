@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: integration
+  main:
+    web-application-type: none
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: email-integration
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: ru.otus.messaging
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+app:
+  kafka:
+    email-topic: email-topic

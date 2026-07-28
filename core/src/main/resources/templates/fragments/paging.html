@@ -1,0 +1,34 @@
+<a th:fragment="paging(source, pageNum, label, tooltip)" class="page-link"
+   th:href="@{${source} + '?' + 'page=' + ${pageNum} + '&size=' + ${pageSize} + ${sortField!=null ? '&sort=' + sortField + ',' + sortDirection : ''} + ${extraQuery != null ? extraQuery : ''}}"
+   th:title="${tooltip}" rel="tooltip">
+    [[${label}]]
+</a>
+
+<div th:fragment="paggination(source)">
+    <nav aria-label="Pagination" th:if="${totalPages > 0 && totalPages > 1}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a th:replace="~{:: paging(${source}, 1, '<<', #{first-page})}"></a>
+            </li>
+            <li class="page-item font-weight-bold" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a th:replace="~{:: paging(${source}, ${currentPage - 1}, #{preview}, #{preview-page})}"></a>
+            </li>
+            <li class="page-item disabled" th:if="${currentPage - 2 > 1}">
+                <a class="page-link" href="#">...</a>
+            </li>
+            <li class="page-item" th:classappend="${page == currentPage} ? 'active'"
+                th:each="page : ${#numbers.sequence(currentPage > 2 ? currentPage - 2 : 1, currentPage + 2 < totalPages ? currentPage + 2 : totalPages)}">
+                <a th:replace="~{:: paging(${source}, ${page}, ${page}, #{page} + ' ' + ${page})}"></a>
+            </li>
+            <li class="page-item disabled" th:if="${currentPage + 2 < totalPages}">
+                <a class="page-link" href="#">...</a>
+            </li>
+            <li class="page-item font-weight-bold" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a th:replace="~{:: paging(${source}, ${currentPage + 1},#{next}, #{next-page})}"></a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a th:replace="~{:: paging(${source}, ${totalPages}, '>>', #{last-page})}"></a>
+            </li>
+        </ul>
+    </nav>
+</div>

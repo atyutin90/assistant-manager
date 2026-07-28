@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="${isEdit} ? #{staff-evaluation.edit} : #{staff-evaluation.create}">Staff evaluation</h1>
+        <span th:if="${isEdit}"
+              class="badge"
+              th:classappend="${staffEvaluation.draft} ? 'text-bg-secondary' : (${staffEvaluation.active} ? 'text-bg-success' : 'text-bg-danger')"
+              th:text="${#messages.msg('StaffEvaluationStatus.' + staffEvaluation.status.name())}">Draft</span>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{employee.project-saved})}"></div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+    <form class="row g-3"
+          th:method="post"
+          th:object="${staffEvaluation}"
+          th:action="@{/staff-evaluations}">
+
+        <input type="hidden" th:field="*{id}"/>
+        <input type="hidden" th:field="*{status}"/>
+
+        <div class="col-md-12">
+            <label class="form-label" for="name" th:text="#{staff-evaluation.name}">Name</label>
+            <input id="name" class="form-control" type="text" th:field="*{name}"
+                   th:readonly="${isEdit && !staffEvaluation.draft}"
+                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="dateFrom" th:text="#{staff-evaluation.date-from}">Date from</label>
+            <input id="dateFrom" class="form-control" type="date" th:field="*{dateFrom}"
+                   th:readonly="${isEdit && !staffEvaluation.draft}"
+                   th:classappend="${#fields.hasErrors('dateFrom')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('dateFrom')}" th:errors="*{dateFrom}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="dateTo" th:text="#{staff-evaluation.date-to}">Date to</label>
+            <input id="dateTo" class="form-control" type="date" th:field="*{dateTo}"
+                   th:readonly="${isEdit && !staffEvaluation.draft}"
+                   th:classappend="${#fields.hasErrors('dateTo')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('dateTo')}" th:errors="*{dateTo}"></div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-center gap-2">
+
+            <button th:if="${isEdit && staffEvaluation.draft}"
+                    type="button"
+                    class="btn btn-outline-success btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#start-evaluation-modal"
+                    th:title="#{staff-evaluation.start}"
+                    th:aria-label="#{staff-evaluation.start}">
+                <i class="fas fa-play"></i>
+            </button>
+
+            <button th:if="${isEdit && staffEvaluation.active}"
+                    type="button"
+                    class="btn btn-outline-success btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#complete-evaluation-modal"
+                    th:title="#{staff-evaluation.complete}"
+                    th:aria-label="#{staff-evaluation.complete}">
+                <i class="fas fa-flag-checkered"></i>
+            </button>
+
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations}"
+               th:title="#{list}"
+               th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+            <a th:if="${isEdit}" class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations/{id}/employees(id=*{id})}"
+               th:title="#{staff-evaluation.manage-employees}"
+               th:aria-label="#{staff-evaluation.manage-employees}">
+                <i class="fas fa-users"></i>
+            </a>
+            <a th:if="${isEdit}" class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations/{id}/questions(id=*{id})}"
+               th:title="#{staff-evaluation.manage-questions}"
+               th:aria-label="#{staff-evaluation.manage-questions}">
+                <i class="fa-solid fa-question"></i>
+            </a>
+            <button th:if="${!isEdit || staffEvaluation.draft}"
+                    type="submit" class="btn btn-outline-success btn-sm"
+                    th:title="#{save}"
+                    th:aria-label="#{save}">
+                <i class="fas fa-save"></i>
+            </button>
+
+            <button th:if="${isEdit && staffEvaluation.draft}"
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#delete-modal"
+                    th:title="#{delete}"
+                    th:aria-label="#{delete}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{fragments/confirmation-modal :: confirmationModal(
+    ${isEdit && staffEvaluation.draft},
+    'start-evaluation-modal',
+    '/staff-evaluations/' + ${staffEvaluation.id} + '/start',
+    #{staff-evaluation.start-title},
+    #{staff-evaluation.start-confirm},
+    'btn-outline-success')}"></div>
+
+<div th:replace="~{fragments/confirmation-modal :: confirmationModal(
+    ${isEdit && staffEvaluation.active},
+    'complete-evaluation-modal',
+    '/staff-evaluations/' + ${staffEvaluation.id} + '/complete',
+    #{staff-evaluation.complete-title},
+    #{staff-evaluation.complete-confirm},
+    'btn-outline-success')}"></div>
+
+<div th:replace="~{fragments/delete-modal :: deleteModal(
+    ${isEdit && staffEvaluation.draft},
+    '/staff-evaluations/' + ${staffEvaluation.id} + '/delete',
+    #{staff-evaluation.delete-title},
+    #{staff-evaluation.delete-confirm})}"></div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

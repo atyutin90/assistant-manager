@@ -1,0 +1,9 @@
+<th scope="col" th:fragment="sorting(url, field, label)">
+    <a th:href="@{${url} + '?' + 'page=' + ${currentPage} + '&size=' + ${pageSize}
+                + ${sortField != null ? '&sort=' + field + ',' + (sortField.contains(field) ? reverseSortDirection : sortDirection) : ''}
+                + ${extraQuery != null ? extraQuery : ''}}"
+       class="text-decoration-none text-dark">
+        [[${label}]] </a>
+    <span th:if="${sortField.contains(field)}"
+          th:class="${sortDirection == 'asc' ? 'fas fa-arrow-down-short-wide' : 'fas fa-arrow-down-wide-short'}"></span>
+</th>

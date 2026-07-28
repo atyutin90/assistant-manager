@@ -1,0 +1,66 @@
+<header th:fragment="admin-header"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+    <nav class="navbar navbar-expand-md bg-dark navbar-dark px-3">
+
+        <a class="navbar-brand" th:href="@{/}">
+            <img alt="STSM logo" src="/static/images/logo.svg" th:src="@{/images/logo.svg}" height="40"/>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar" aria-controls="topNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="topNavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/staff-evaluations}" th:text="#{staff-evaluations}">Staff Evaluations</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/users}" th:text="#{employees.tab}">Employees</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/questions}" th:text="#{questions.tab}">Questions</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" th:text="#{manuals.tab}" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Manuals
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" th:href="@{/career-levels}" th:text="#{career-levels}">Career levels</a></li>
+                        <li><a class="dropdown-item" th:href="@{/project-roles}" th:text="#{project-roles}">Project roles</a></li>
+                        <li><a class="dropdown-item" th:href="@{/skills}" th:text="#{skills}">Skills</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center ms-auto gap-3">
+
+                <span class="text-white" sec:authentication="name"></span>
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            th:text="${#locale.language == 'ru' ? '🇷🇺' : '🇬🇧'}">
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" th:href="@{/(lang=en)}">🇬🇧 EN</a></li>
+                        <li><a class="dropdown-item" th:href="@{/(lang=ru)}">🇷🇺 RU</a></li>
+                    </ul>
+                </div>
+
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            th:text="#{sign-out}">
+                        Sign Out
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </nav>
+</header>

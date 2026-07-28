@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <h1 class="h3 mb-0" th:text="#{staff-evaluation.manage-questions}">Questions</h1>
+            <div class="text-muted">
+                <span th:text="${staffEvaluation.name}">Staff evaluation</span>
+                <span class="badge text-bg-secondary ms-2" th:text="${assignedTotal}">0</span>
+                <span class="badge ms-2"
+                      th:classappend="${staffEvaluation.status.name() == 'DRAFT'} ? 'text-bg-secondary' : (${staffEvaluation.status.name() == 'ACTIVE'} ? 'text-bg-success' : 'text-bg-danger')"
+                      th:text="${#messages.msg('StaffEvaluationStatus.' + staffEvaluation.status.name())}">Draft</span>
+            </div>
+        </div>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/staff-evaluations}" th:title="#{list}" th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations/{id}(id=${staffEvaluation.id})}"
+               th:title="#{staff-evaluation}" th:aria-label="#{staff-evaluation}">
+                <i class="fa-regular fa-chart-bar"></i>
+            </a>
+        </div>
+    </div>
+
+    <form class="mb-3" method="get" th:action="@{/staff-evaluations/{id}/questions(id=${staffEvaluation.id})}">
+        <div class="row g-2 mb-2 align-items-end">
+            <div class="col-md-4">
+                <select name="project_role" class="form-select" th:aria-label="#{project-role}">
+                    <option value="" th:text="#{filter.all-project-roles}">All project roles</option>
+                    <option th:each="role : ${projectRoles}" th:value="${role.id}"
+                            th:selected="${role.id == assignedQuestionFilter.projectRole}" th:text="${role.value}">Role</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="skill" class="form-select" th:aria-label="#{question.skill}">
+                    <option value="" th:text="#{filter.all-skills}">All skills</option>
+                    <option th:each="skill : ${skills}" th:value="${skill.id}"
+                            th:selected="${skill.id == assignedQuestionFilter.skill}" th:text="${skill.value}">Skill</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input name="search" type="search" class="form-control" th:value="${assignedQuestionFilter.search}"
+                       th:placeholder="#{filter.search}" th:aria-label="#{filter.search}">
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-outline-primary btn-sm" type="submit" th:title="#{filter.search}" th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations/{id}/questions(id=${staffEvaluation.id})}"
+               th:title="#{reset-search}" th:aria-label="#{reset-search}">
+                <i class="fa-solid fa-broom"></i>
+            </a>
+        </div>
+    </form>
+
+    <form>
+        <input type="hidden" name="search" th:value="${assignedQuestionFilter.search}">
+        <input type="hidden" name="project_role" th:value="${assignedQuestionFilter.projectRole}">
+        <input type="hidden" name="skill" th:value="${assignedQuestionFilter.skill}">
+        <div class="d-flex justify-content-end mb-2">
+            <button th:if="${staffEvaluation.canAdd()}"
+                    class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addQuestionsModal"
+                    th:title="#{staff-evaluation.add-questions}" th:aria-label="#{staff-evaluation.add-questions}">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+            <button th:if="${staffEvaluation.canModifyPositions()}"
+                    class="btn btn-outline-primary btn-sm" type="submit" th:formmethod="post"
+                    th:formaction="@{/staff-evaluations/{id}/questions/positions(id=${staffEvaluation.id})}"
+                    th:title="#{staff-evaluation.save-positions}" th:aria-label="#{staff-evaluation.save-positions}">
+                <i class="fas fa-floppy-disk"></i>
+            </button>
+            <button th:if="${staffEvaluation.canRemove()}"
+                    class="btn btn-outline-danger btn-sm" type="submit" th:formmethod="post" th:name="_method" th:value="delete"
+                    th:formaction="@{/staff-evaluations/{id}/questions/selected(id=${staffEvaluation.id})}"
+                    th:title="#{staff-evaluation.remove-selected}" th:aria-label="#{staff-evaluation.remove-selected}">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead><tr>
+                    <th scope="col"></th>
+                    <th scope="col" th:text="#{question.position}">Position</th>
+                    <th scope="col" th:text="#{question.enabled}">Enabled</th>
+                    <th scope="col" th:text="#{question.uuid}">UUID</th>
+                    <th scope="col" th:text="#{project-role}">Project role</th>
+                    <th scope="col" th:text="#{question.skill}">Skill</th>
+                    <th scope="col" th:text="#{question.area-knowledge}">Area</th>
+                    <th scope="col" th:text="#{question.section}">Section</th>
+                    <th scope="col" th:text="#{actions}">Actions</th>
+                </tr></thead>
+                <tbody>
+                <tr th:if="${assignedQuestions.isEmpty()}">
+                    <td colspan="9" class="text-center text-muted py-4" th:text="#{questions.empty}">No data</td>
+                </tr>
+                <tr th:each="question : ${assignedQuestions}">
+                    <td>
+                        <input th:if="${staffEvaluation.canRemove()}"
+                               class="form-check-input"
+                               type="checkbox"
+                               name="questionIds"
+                               th:value="${question.id}">
+                    </td>
+                    <td>
+                        <input class="form-control form-control-sm"
+                               type="number"
+                               min="1"
+                               th:name="${'id_' + question.id}"
+                               th:value="${question.position}"
+                               th:readonly="${!staffEvaluation.canModifyPositions()}"
+                               th:aria-label="#{question.position}"
+                               style="width: 4rem">
+                    </td>
+                    <td>
+                        <i th:class="${question.enabled ? 'fas fa-check text-success' : 'fas fa-xmark text-secondary'}"></i>
+                    </td>
+                    <td th:text="${question.uuid}">uuid</td>
+                    <td>
+                        <span th:each="role : ${projectRoles}"
+                              th:if="${role.id == question.projectRole}"
+                              th:text="${role.value}">Role</span>
+                    </td>
+                    <td>
+                        <span th:each="skill : ${skills}"
+                              th:if="${skill.id == question.skill}"
+                              th:text="${skill.value}">Skill</span>
+                    </td>
+                    <td th:text="${question.areaKnowledge}">Area</td>
+                    <td th:text="${question.section}">Section</td>
+                    <td>
+                        <a class="btn btn-outline-secondary btn-sm" th:href="@{/questions/{id}(id=${question.id})}"
+                           th:title="#{staff-evaluations.question-card}" th:aria-label="#{staff-evaluations.question-card}">
+                            <i class="fa-solid fa-question"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+    <div th:replace="~{fragments/admin-paging :: qualifiedPagination(
+        ${source}, 'assigned', ${assignedCurrentPage}, ${assignedTotalPages}, ${assignedPageSize},
+        ${assignedSortField}, ${assignedSortDirection}, ${assignedQuestionExtraQuery})}"></div>
+
+    <div th:if="${staffEvaluation.canAdd()}" class="modal fade" id="addQuestionsModal" tabindex="-1"
+         aria-labelledby="addQuestionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="addQuestionsModalLabel" th:text="#{staff-evaluation.add-questions}">Add questions</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" th:aria-label="#{cancel}"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="mb-3" method="get" th:action="@{/staff-evaluations/{id}/questions(id=${staffEvaluation.id})}">
+                        <input type="hidden" name="modal" value="true">
+                        <div class="row g-2 mb-2 align-items-end">
+                            <div class="col-md-3">
+                                <select name="question_project_role" class="form-select" th:aria-label="#{project-role}">
+                                    <option value="" th:text="#{filter.all-project-roles}">All project roles</option>
+                                    <option th:each="role : ${projectRoles}" th:value="${role.id}"
+                                            th:selected="${role.id == questionFilter.projectRole}" th:text="${role.value}">Role</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="question_skill" class="form-select" th:aria-label="#{question.skill}">
+                                    <option value="" th:text="#{filter.all-skills}">All skills</option>
+                                    <option th:each="skill : ${skills}" th:value="${skill.id}"
+                                            th:selected="${skill.id == questionFilter.skill}" th:text="${skill.value}">Skill</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="question_enabled" class="form-select" th:aria-label="#{question.enabled}">
+                                    <option value="" th:selected="${questionFilter.enabled == null}" th:text="#{filter.all}">All</option>
+                                    <option value="true" th:selected="${questionFilter.enabled == true}" th:text="#{filter.enabled.yes}">Yes</option>
+                                    <option value="false" th:selected="${questionFilter.enabled == false}" th:text="#{filter.enabled.no}">No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input name="question_search" type="search" class="form-control" th:value="${questionFilter.search}"
+                                       th:placeholder="#{filter.search}" th:aria-label="#{filter.search}">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-outline-primary btn-sm" type="submit" th:title="#{filter.search}" th:aria-label="#{filter.search}">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" type="submit" th:formmethod="post"
+                                    th:formaction="@{/staff-evaluations/{id}/questions(id=${staffEvaluation.id})}"
+                                    th:title="#{staff-evaluation.add-filtered}" th:aria-label="#{staff-evaluation.add-filtered}">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </button>
+                            <a class="btn btn-outline-secondary btn-sm"
+                               th:href="@{/staff-evaluations/{id}/questions(id=${staffEvaluation.id},modal=true)}"
+                               th:title="#{reset-search}" th:aria-label="#{reset-search}">
+                                <i class="fa-solid fa-broom"></i>
+                            </a>
+                        </div>
+                    </form>
+
+                    <form method="post" id="selectedQuestionsForm">
+                        <div class="d-flex justify-content-end mb-2">
+                            <button class="btn btn-outline-success btn-sm" type="submit"
+                                    th:formaction="@{/staff-evaluations/{id}/questions/selected(id=${staffEvaluation.id})}"
+                                    th:title="#{staff-evaluation.add-selected}" th:aria-label="#{staff-evaluation.add-selected}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover align-middle">
+                                <thead><tr>
+                                    <th scope="col"></th>
+                                    <th scope="col" th:text="#{staff-evaluation.assigned}">Assigned</th>
+                                    <th scope="col" th:text="#{question.enabled}">Enabled</th>
+                                    <th scope="col" th:text="#{question.uuid}">UUID</th>
+                                    <th scope="col" th:text="#{project-role}">Project role</th>
+                                    <th scope="col" th:text="#{question.skill}">Skill</th>
+                                    <th scope="col" th:text="#{question.area-knowledge}">Area</th>
+                                    <th scope="col" th:text="#{question.section}">Section</th>
+                                </tr></thead>
+                                <tbody>
+                                <tr th:if="${questions.isEmpty()}">
+                                    <td colspan="8" class="text-center text-muted py-4" th:text="#{questions.empty}">No data</td>
+                                </tr>
+                                <tr th:each="question : ${questions.content}">
+                                    <td><input class="form-check-input question-selector" type="checkbox" name="questionIds"
+                                               th:value="${question.id}"
+                                               th:disabled="${#sets.contains(staffEvaluation.questionIds, question.id)}"></td>
+                                    <td><i th:class="${#sets.contains(staffEvaluation.questionIds, question.id) ? 'fas fa-check text-success' : 'fas fa-xmark text-secondary'}"></i></td>
+                                    <td>
+                                        <i th:class="${question.enabled ? 'fas fa-check text-success' : 'fas fa-xmark text-secondary'}"></i>
+                                    </td>
+                                    <td th:text="${question.uuid}">uuid</td>
+                                    <td><span th:each="role : ${projectRoles}" th:if="${role.id == question.projectRole}" th:text="${role.value}">Role</span></td>
+                                    <td><span th:each="skill : ${skills}" th:if="${skill.id == question.skill}" th:text="${skill.value}">Skill</span></td>
+                                    <td th:text="${question.areaKnowledge}">Area</td>
+                                    <td th:text="${question.section}">Section</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                    <div th:replace="~{fragments/admin-paging :: qualifiedPagination(
+                        ${source}, 'question', ${questionCurrentPage}, ${questionTotalPages}, ${questionPageSize},
+                        ${questionSortField}, ${questionSortDirection}, ${questionExtraQuery})}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('addQuestionsModal');
+        if (!modalElement) { return; }
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        if (/*[[${modal}]]*/ false) { modal.show(); }
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            if (window.location.search) { window.location.href = window.location.pathname; }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="${isEdit} ? #{employee.edit} : #{employee.create}">Employee</h1>
+        <button th:if="${isEdit}"
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                data-bs-toggle="modal"
+                data-bs-target="#employee-password-modal">
+            <i class="fas fa-key me-2"></i>
+            <span th:text="#{employee.change-password}">Change password</span>
+        </button>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successChangePassword}, #{employee.password-changed})}"></div>
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{employee.project-saved})}"></div>
+
+
+    <form class="row g-3"
+          th:method="post"
+          th:object="${user}"
+          th:action="@{/users}">
+
+        <input type="hidden" th:field="*{id}"/>
+
+        <div class="col-md-6">
+            <label class="form-label" for="lastName" th:text="#{employee.last-name}">Last name</label>
+            <input id="lastName" class="form-control" type="text" th:field="*{lastName}" th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="middleName" th:text="#{employee.middle-name}">Middle name</label>
+            <input id="middleName" class="form-control" type="text" th:field="*{middleName}" th:classappend="${#fields.hasErrors('middleName')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('middleName')}" th:errors="*{middleName}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="firstName" th:text="#{employee.first-name}">First name</label>
+            <input id="firstName" class="form-control" type="text" th:field="*{firstName}" th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="username" th:text="#{employee.username}">Username</label>
+            <input id="username" class="form-control" type="text" th:field="*{username}" th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="projectRole" th:text="#{employee.project-role}">Project role</label>
+            <select id="projectRole" class="form-select" th:field="*{projectRole}" th:classappend="${#fields.hasErrors('projectRole')} ? 'is-invalid'">
+                <option value=""></option>
+                <option th:each="role : ${projectRoles}"
+                        th:value="${role.id}"
+                        th:selected="${role.id == user.projectRole}"
+                        th:text="${role.value}">Role</option>
+            </select>
+            <div class="text-danger small" th:if="${#fields.hasErrors('projectRole')}" th:errors="*{projectRole}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="currentLevel" th:text="#{employee.current-level}">CurrentLevel</label>
+            <select id="currentLevel" class="form-select" th:field="*{currentLevel}" th:classappend="${#fields.hasErrors('currentLevel')} ? 'is-invalid'">
+                <option value=""></option>
+                <option th:each="role : ${careerLevels}"
+                        th:value="${role.id}"
+                        th:selected="${role.id == user.currentLevel}"
+                        th:text="${role.value}">Current level</option>
+            </select>
+            <div class="text-danger small" th:if="${#fields.hasErrors('currentLevel')}" th:errors="*{currentLevel}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="laborCodePosition" th:text="#{employee.labor-code-position}">Labor Code Position</label>
+            <input id="laborCodePosition" class="form-control" type="text" th:field="*{laborCodePosition}" th:classappend="${#fields.hasErrors('laborCodePosition')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('laborCodePosition')}" th:errors="*{laborCodePosition}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="email" th:text="#{employee.email}">Email</label>
+            <input id="email" class="form-control" type="text" th:field="*{email}" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="userRoles" th:text="#{employee.user-roles}">User Roles</label>
+            <select id="userRoles" class="form-select" th:field="*{userRoles}" multiple size="7" th:classappend="${#fields.hasErrors('userRoles')} ? 'is-invalid'">
+                <option th:each="userRole : ${userRoles}"
+                        th:value="${userRole.code()}"
+                        th:text="${userRole.value()}"
+                        th:selected="${user.userRoles != null ? #lists.contains(user.userRoles, userRole.code()) : false}">
+                </option>
+            </select>
+            <div class="form-text" th:text="#{info.hold-ctrl-to-select-multiple-values}"></div>
+            <div class="text-danger small" th:if="${#fields.hasErrors('userRoles')}" th:errors="*{userRoles}"></div>
+        </div>
+
+        <div id="responsibleBlock"
+             class="col-md-6"
+             th:classappend="${user.userRoles != null && #sets.contains(user.userRoles, 'USER')} ? '' : 'd-none'">
+            <label class="form-label" for="responsibleId" th:text="#{employee.responsible}">Responsible</label>
+            <select id="responsibleId" class="form-select" th:field="*{responsibleId}">
+                <option value=""></option>
+                <option th:each="teamLead : ${teamLeads}"
+                        th:value="${teamLead.id}"
+                        th:text="${teamLead.value}">
+                    Team lead
+                </option>
+            </select>
+            <div class="form-text" th:text="#{employee.responsible-description}">
+                Select a team lead responsible for this employee
+            </div>
+        </div>
+
+        <div class="col-md-6" th:if="${!isEdit}">
+            <label class="form-label" for="password" th:text="#{employee.password}">Password</label>
+            <input id="password"
+                   class="form-control"
+                   type="password"
+                   th:field="*{password}"
+                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-center gap-2">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/users}" th:title="#{list}" th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+            <button type="submit" class="btn btn-outline-success btn-sm" th:title="#{save}" th:aria-label="#{save}">
+                <i class="fas fa-save"></i>
+            </button>
+            <button th:if="${isEdit}"
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#delete-modal"
+                    th:title="#{delete}"
+                    th:aria-label="#{delete}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </form>
+</main>
+
+<div class="modal fade"
+     id="employee-password-modal"
+     tabindex="-1"
+     aria-hidden="true"
+     th:if="${isEdit}">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content"
+              method="post"
+              th:action="@{/users/{id}(id=${user.id})}"
+              th:object="${passwordChange}">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" th:text="#{employee.change-password}">Change password</h2>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        th:aria-label="#{cancel}">
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="employeeNewPassword"
+                           th:text="#{profile.new-password}">New password
+                    </label>
+                    <input id="employeeNewPassword"
+                           class="form-control"
+                           type="password"
+                           autocomplete="new-password"
+                           th:field="*{newPassword}"
+                           th:classappend="${#fields.hasErrors('newPassword')} ? 'is-invalid'">
+                    <div class="invalid-feedback"
+                         th:if="${#fields.hasErrors('newPassword')}"
+                         th:errors="*{newPassword}">
+                        Password must contain from 8 to 72 characters
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label" for="employeePasswordConfirmation"
+                           th:text="#{profile.confirm-password}">Confirm password
+                    </label>
+                    <input id="employeePasswordConfirmation"
+                           class="form-control"
+                           type="password"
+                           autocomplete="new-password"
+                           th:field="*{passwordConfirmation}"
+                           th:classappend="${#fields.hasErrors('passwordConfirmation')} ? 'is-invalid'">
+                    <div class="invalid-feedback"
+                         th:if="${#fields.hasErrors('passwordConfirmation')}"
+                         th:errors="*{passwordConfirmation}">Passwords do not match
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center gap-2">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal"
+                        th:title="#{cancel}">
+                    <i class="fas fa-list"></i>
+                </button>
+                <button type="submit"
+                        class="btn btn-success"
+                        th:title="#{employee.set-new-password}">
+                    <i class="fas fa-key"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments/delete-modal :: deleteModal(${isEdit}, '/users/' + ${user.id} + '/delete', #{employee.delete-title}, #{employee.delete-confirm})}"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roles = document.getElementById('userRoles');
+        const responsibleBlock = document.getElementById('responsibleBlock');
+
+        function updateResponsibleVisibility() {
+            const isEmployee = Array.from(roles.selectedOptions)
+                .some(option => option.value === 'USER');
+            responsibleBlock.classList.toggle('d-none', !isEmployee);
+        }
+
+        roles.addEventListener('change', updateResponsibleVisibility);
+        updateResponsibleVisibility();
+    });
+</script>
+<script th:if="${showPasswordModal}">
+    document.addEventListener('DOMContentLoaded', function () {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('employee-password-modal')).show();
+    });
+</script>
+</body>
+</html>
