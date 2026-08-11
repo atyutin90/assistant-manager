@@ -10,6 +10,7 @@ public record ManagerUserFilter(
     Long careerLevel,
     Long skill,
     Long project,
+    Long staffEvaluation,
     Long managerId
 ) implements PageDataFilter {
 
@@ -21,16 +22,19 @@ public record ManagerUserFilter(
         appendQueryParam(query, CAREER_LEVEL, careerLevel);
         appendQueryParam(query, SKILL, skill);
         appendQueryParam(query, PROJECT, project);
+        appendQueryParam(query, STAFF_EVALUATION, staffEvaluation);
         return query.toString();
     }
 
-    public static ManagerUserFilter of(EmployeeFilter employeeFilter, Long projectId, Long managerId) {
+    public static ManagerUserFilter of(EmployeeFilter employeeFilter, Long projectId,
+                                       Long staffEvaluationId, Long managerId) {
         return ManagerUserFilter.builder()
             .search(employeeFilter.search())
             .projectRole(employeeFilter.projectRole())
             .careerLevel(employeeFilter.careerLevel())
             .skill(employeeFilter.skill())
             .project(projectId)
+            .staffEvaluation(staffEvaluationId)
             .managerId(managerId)
             .build();
     }

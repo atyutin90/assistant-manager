@@ -10,10 +10,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.otus.dto.ManagerUserDto;
+import ru.otus.dto.ManagerStaffEvaluationDto;
 import ru.otus.dto.UserDto;
 import ru.otus.services.CareerLevelService;
 import ru.otus.services.JwtService;
 import ru.otus.services.ManagerUserService;
+import ru.otus.services.ManagerStaffEvaluationService;
 import ru.otus.services.ProjectRoleService;
 import ru.otus.services.ProjectService;
 import ru.otus.services.SkillService;
@@ -36,6 +38,7 @@ import static ru.otus.controllers.pages.AbstractPageController.FILTER;
 import static ru.otus.controllers.pages.AbstractPageController.PROJECTS;
 import static ru.otus.controllers.pages.AbstractPageController.PROJECT_ROLES;
 import static ru.otus.controllers.pages.AbstractPageController.SKILLS;
+import static ru.otus.controllers.pages.AbstractPageController.STAFF_EVALUATIONS;
 import static ru.otus.controllers.pages.AbstractPageController.USERS;
 
 @DisplayName("Контроллер сотрудников менеджера")
@@ -49,6 +52,9 @@ class ManagerUserPageControllerTest {
 
     @MockitoBean
     private ManagerUserService managerUserService;
+
+    @MockitoBean
+    private ManagerStaffEvaluationService managerStaffEvaluationService;
 
     @MockitoBean
     private ProjectService projectService;
@@ -83,6 +89,8 @@ class ManagerUserPageControllerTest {
             .skillLevels(List.of())
             .build());
         when(managerUserService.findAll(org.mockito.ArgumentMatchers.any())).thenReturn(users);
+        var staffEvaluations = List.of(ManagerStaffEvaluationDto.builder().id(8L).name("2026").build());
+        when(managerStaffEvaluationService.findAll()).thenReturn(staffEvaluations);
         when(projectService.findAll(org.mockito.ArgumentMatchers.any(
             ru.otus.dto.filter.ProjectFilter.class))).thenReturn(List.of());
 
@@ -92,13 +100,17 @@ class ManagerUserPageControllerTest {
                 .param("projectRole", "2")
                 .param("careerLevel", "3")
                 .param("skill", "4")
-                .param("project", "6"))
+                .param("project", "6")
+                .param("staffEvaluation", "8"))
             .andExpect(status().isOk())
             .andExpect(view().name("page/employee/list"))
             .andExpect(model().attribute(USERS, users))
+            .andExpect(model().attribute(STAFF_EVALUATIONS, staffEvaluations))
             .andExpect(model().attributeExists(FILTER, PROJECTS, PROJECT_ROLES, CAREER_LEVELS, SKILLS, EXTRA_QUERY));
 
         verify(managerUserService).findAll(argThat(filter ->
-            filter.managerId().equals(5L) && filter.project().equals(6L)));
+            filter.managerId().equals(5L)
+                && filter.project().equals(6L)
+                && filter.staffEvaluation().equals(8L)));
     }
 }

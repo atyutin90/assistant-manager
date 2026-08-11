@@ -51,6 +51,12 @@ public interface StaffEvaluationUserRepository extends JpaRepository<StaffEvalua
     @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
     List<StaffEvaluationUser> findLastByStatusForAllUsers(StaffEvaluationUserStatus status);
 
+    @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
+    List<StaffEvaluationUser> findByStaffEvaluationIdAndStatus(
+        Long staffEvaluationId,
+        StaffEvaluationUserStatus status
+    );
+
     @EntityGraph(value = STAFF_EVALUATION_USER_GRAPH)
     List<StaffEvaluationUser> findByUserIdAndStaffEvaluationStatus(
         Long userId,

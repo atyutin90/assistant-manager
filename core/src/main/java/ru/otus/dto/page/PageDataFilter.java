@@ -16,6 +16,8 @@ public interface PageDataFilter {
 
     String CAREER_LEVEL = "careerLevel";
 
+    String STAFF_EVALUATION = "staffEvaluation";
+
     String ENABLED = "enabled";
 
     String buildExtraQuery();

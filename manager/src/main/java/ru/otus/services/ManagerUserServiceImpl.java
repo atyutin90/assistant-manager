@@ -60,13 +60,16 @@ public class ManagerUserServiceImpl implements ManagerUserService {
         var userFilter = UserFilter.builder()
             .search(filter.search())
             .projectRole(filter.projectRole())
-            .role(USER).build();
+            .role(USER)
+            .build();
 
         //TODO: Fetching all users isn't the best approach in terms of performance,
         // we should think about a better way to handle this in the future.
         var employees = userRepository.findAll(userFilterSpecification(userFilter));
 
-        var staffEvaluationUsers = staffEvaluationUserRepository.findLastByStatusForAllUsers(COMPLETED);
+        var staffEvaluationUsers = filter.staffEvaluation() == null
+            ? staffEvaluationUserRepository.findLastByStatusForAllUsers(COMPLETED)
+            : staffEvaluationUserRepository.findByStaffEvaluationIdAndStatus(filter.staffEvaluation(), COMPLETED);
 
         var staffEvaluationUserMap = staffEvaluationUsers.stream()
             .collect(toMap(staffEvaluationUser -> staffEvaluationUser.getUser().getId(), identity()));

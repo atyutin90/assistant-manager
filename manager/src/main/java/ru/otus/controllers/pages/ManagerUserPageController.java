@@ -12,6 +12,7 @@ import ru.otus.dto.filter.ManagerUserFilter.EmployeeFilter;
 import ru.otus.dto.filter.ProjectFilter;
 import ru.otus.services.CareerLevelService;
 import ru.otus.services.ManagerUserService;
+import ru.otus.services.ManagerStaffEvaluationService;
 import ru.otus.services.ProjectRoleService;
 import ru.otus.services.ProjectService;
 import ru.otus.services.SkillService;
@@ -21,6 +22,8 @@ import ru.otus.services.SkillService;
 public class ManagerUserPageController implements AbstractPageController {
 
     private final ManagerUserService managerUserService;
+
+    private final ManagerStaffEvaluationService managerStaffEvaluationService;
 
     private final ProjectService projectService;
 
@@ -37,6 +40,7 @@ public class ManagerUserPageController implements AbstractPageController {
         @RequestParam(required = false) Long careerLevel,
         @RequestParam(required = false) Long skill,
         @RequestParam(required = false, name = PROJECT) Long projectId,
+        @RequestParam(required = false, name = STAFF_EVALUATION) Long staffEvaluationId,
         @CurrentUserParam CurrentUser currentUser,
         Model model
     ) {
@@ -47,16 +51,16 @@ public class ManagerUserPageController implements AbstractPageController {
             .careerLevel(careerLevel)
             .skill(skill)
             .build();
-        var userFilter = ManagerUserFilter.of(employeeFilter, projectId, currentUser.id());
+        var userFilter = ManagerUserFilter.of(employeeFilter, projectId, staffEvaluationId, currentUser.id());
         var projects = projectService.findAll(projectFilter);
         var users = managerUserService.findAll(userFilter);
         model.addAttribute(USERS, users);
         model.addAttribute(FILTER, userFilter);
         model.addAttribute(PROJECTS, projects);
+        model.addAttribute(STAFF_EVALUATIONS, managerStaffEvaluationService.findAll());
         model.addAttribute(PROJECT_ROLES, projectRoleService.findAllEnabledValues());
         model.addAttribute(CAREER_LEVELS, careerLevelService.findAllEnabledValues());
         model.addAttribute(SKILLS, skillService.findAllEnabledValues());
-        model.addAttribute(EXTRA_QUERY, userFilter.buildExtraQuery());
         model.addAttribute(EXTRA_QUERY, userFilter.buildExtraQuery());
         return "page/employee/list";
     }
