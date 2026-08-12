@@ -5,9 +5,9 @@ spring:
   application:
     name: manager
   datasource:
-    url: jdbc:postgresql://localhost:5433/assistant_db
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=assistant_db2
     username: postgres
-    password: postgres
+    password: example
   flyway:
     enabled: true
   jpa:

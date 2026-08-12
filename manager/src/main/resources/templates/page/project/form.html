@@ -23,7 +23,7 @@
 
         <div class="col-12" th:if="${isEdit}">
             <label class="form-label gap-2" th:text="#{manager.project-owner}"/>
-            <span class="text-muted" th:text="*{ownerUsername}">username</span>
+            <span class="text-muted" th:text="${project.owner != null ? project.owner.username : ''}">username</span>
         </div>
 
         <div class="col-12">
@@ -31,6 +31,7 @@
                 <input id="active"
                        class="form-check-input"
                        type="checkbox"
+                       th:disabled="${!canEdit}"
                        th:field="*{active}">
                 <label class="form-check-label" for="active"
                        th:text="#{manager.project-active}">
@@ -50,6 +51,7 @@
             <input id="name"
                    class="form-control"
                    type="text"
+                   th:readonly="${!canEdit}"
                    th:field="*{name}"
                    th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
             <div class="text-danger small"
@@ -66,6 +68,7 @@
             <textarea id="description"
                       class="form-control"
                       rows="5"
+                      th:readonly="${!canEdit}"
                       th:field="*{description}"
                       th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'">
             </textarea>
@@ -97,12 +100,13 @@
                 <i class="fas fa-user-shield"></i>
             </a>
             <button class="btn btn-outline-success btn-sm"
+                    th:if="${canEdit}"
                     type="submit"
                     th:title="#{save}"
                     th:aria-label="#{save}">
                 <i class="fas fa-save"></i>
             </button>
-            <button th:if="${canManageAccess}"
+            <button th:if="${canDelete}"
                     type="button"
                     class="btn btn-outline-danger btn-sm"
                     data-bs-toggle="modal"
@@ -116,7 +120,7 @@
 </main>
 
 <div th:replace="~{fragments/delete-modal :: deleteModal(
-    ${canManageAccess},
+    ${canDelete},
     '/projects/' + ${project.id},
     #{manager.project-delete-title},
     #{manager.project-delete-confirm}

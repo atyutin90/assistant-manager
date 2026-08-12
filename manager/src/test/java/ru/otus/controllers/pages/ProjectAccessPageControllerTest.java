@@ -11,9 +11,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.otus.dto.ManagerAccessDto;
 import ru.otus.dto.ProjectDto;
+import ru.otus.dto.ProjectManagerDto;
 import ru.otus.dto.UserDto;
 import ru.otus.services.JwtService;
-import ru.otus.services.ProjectService;
+import ru.otus.services.project.ProjectService;
 import ru.otus.services.UserService;
 
 import java.util.List;
@@ -61,9 +62,14 @@ class ProjectAccessPageControllerTest {
     @Test
     @DisplayName("страница должна содержать проект и доступных менеджеров")
     void shouldRenderProjectAccess() throws Exception {
-        var project = ProjectDto.builder().id(3L).name("Project").active(true).ownerId(5L).build();
+        var project = ProjectDto.builder()
+            .id(3L)
+            .name("Project")
+            .active(true)
+            .owner(ProjectManagerDto.builder().id(5L).build())
+            .build();
         var managers = List.of(ManagerAccessDto.builder().id(8L).username("manager2").build());
-        when(projectService.findByIdAndOwnerId(3L, 5L)).thenReturn(project);
+        when(projectService.findEditableById(3L, 5L)).thenReturn(project);
         when(projectService.findManagerAccessOptions(3L, 5L)).thenReturn(managers);
 
         mvc.perform(get("/projects/3/access").with(user("manager")))
@@ -78,11 +84,12 @@ class ProjectAccessPageControllerTest {
     void shouldSaveProjectAccess() throws Exception {
         mvc.perform(post("/projects/3/access")
                 .with(user("manager"))
-                .param("managerIds", "8", "9"))
+                .param("readManagerIds", "8", "9")
+                .param("editManagerIds", "9"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/projects/3/access"))
             .andExpect(flash().attribute(SUCCESS_OPERATION, true));
 
-        verify(projectService).saveAccess(3L, 5L, Set.of(8L, 9L));
+        verify(projectService).saveAccess(3L, 5L, Set.of(8L, 9L), Set.of(9L));
     }
 }

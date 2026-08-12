@@ -100,14 +100,12 @@ class SurveyPageControllerTest {
     @Test
     @DisplayName("завершение ответа должно возвращать к списку оценок")
     void shouldFinishSurvey() throws Exception {
-        mvc.perform(post("/survey/3/DEVELOPER/question-1")
-                .with(user(EMPLOYEE))
-                .param("action", "finish")
-                .param("response", YES.name()))
+        mvc.perform(post("/survey/3/DEVELOPER/complete")
+                .with(user(EMPLOYEE)))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/staff-evaluations"));
 
-        verify(surveyService).saveAnswer(argThat(SurveyAnswerCommand::finish));
+        verify(surveyService).complete(3L, 7L, "DEVELOPER");
     }
 
     @Test
@@ -163,7 +161,6 @@ class SurveyPageControllerTest {
             .projectRole("DEVELOPER")
             .questionUuid("question-1")
             .response(YES)
-            .finish(false)
             .build();
         return expected.equals(command);
     }

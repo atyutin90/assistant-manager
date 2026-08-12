@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
+import java.util.Set;
+
 @Builder
 public record ProjectDto(
     Long id,
@@ -19,8 +21,10 @@ public record ProjectDto(
     @NotNull
     Boolean active,
 
-    Long ownerId,
+    ProjectManagerDto owner,
 
-    String ownerUsername
+    Set<ProjectManagerDto> editAccessManagers,
+
+    Set<ProjectManagerDto> readAccessManagers
 ) {
 }

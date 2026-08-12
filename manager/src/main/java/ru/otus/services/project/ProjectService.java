@@ -1,4 +1,4 @@
-package ru.otus.services;
+package ru.otus.services.project;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,9 +30,11 @@ public interface ProjectService {
 
     void saveQuestions(Long projectId, Long userId, Long projectRoleId, ProjectQuestionsForm form);
 
-    ProjectDto findByIdAndOwnerId(Long id, Long userId);
+    ProjectDto findEditableById(Long id, Long userId);
 
     List<ManagerAccessDto> findManagerAccessOptions(Long projectId, Long userId);
 
-    void saveAccess(Long projectId, Long userId, Set<Long> managerIds);
+    void saveAccess(Long projectId, Long userId, Set<Long> readManagerIds, Set<Long> editManagerIds);
+
+    boolean canEdit(Long projectId, Long userId);
 }

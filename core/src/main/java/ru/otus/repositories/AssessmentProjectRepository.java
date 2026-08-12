@@ -19,10 +19,25 @@ public interface AssessmentProjectRepository extends
     @Query("""
         SELECT DISTINCT project
         FROM AssessmentProject project
-        LEFT JOIN project.sharedManagers manager
-        WHERE project.id = :id AND (project.owner.id = :managerId OR manager.id = :managerId)
+        LEFT JOIN project.accesses access
+        WHERE project.id = :id AND (
+            project.owner.id = :managerId OR
+            (access.manager.id = :managerId AND (access.readAccess = TRUE OR access.editAccess = TRUE))
+        )
         """)
     Optional<AssessmentProject> findAccessibleById(Long id, Long managerId);
+
+    @EntityGraph(value = ASSESSMENT_PROJECT_GRAPH)
+    @Query("""
+        SELECT DISTINCT project
+        FROM AssessmentProject project
+        LEFT JOIN project.accesses access
+        WHERE project.id = :id AND (
+            project.owner.id = :managerId OR
+            (access.manager.id = :managerId AND access.editAccess = TRUE)
+        )
+        """)
+    Optional<AssessmentProject> findEditableById(Long id, Long managerId);
 
     @EntityGraph(value = ASSESSMENT_PROJECT_GRAPH)
     Optional<AssessmentProject> findByIdAndOwnerId(Long id, Long ownerId);

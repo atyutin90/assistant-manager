@@ -29,6 +29,7 @@ import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static ru.otus.entity.enums.StaffEvaluationUserStatus.COMPLETED;
 import static ru.otus.entity.enums.StaffEvaluationUserStatus.VERIFICATION;
+import static ru.otus.entity.enums.AnswerResponse.YES;
 import static ru.otus.exceptions.WebApplicationException.errorOf;
 
 @Service
@@ -51,37 +52,22 @@ public class VerificationServiceImpl implements VerificationService {
     }
 
     @Override
-    public String findStartQuestion(Long staffEvaluationUserId, Long verifierId) {
-        var staffEvaluationUser = findStaffEvaluationUser(staffEvaluationUserId, verifierId);
-        var questionPositionMap = questionPositionMapOf(staffEvaluationUser);
-        var answers = sortedAnswers(staffEvaluationUserId, questionPositionMap);
-        checkAnswers(answers);
-        return answers.stream()
-            .filter(answer -> answer.getVerifiedResponse() == null)
-            .findFirst()
-            .orElse(answers.get(0))
-            .getQuestion()
-            .getUuid();
-    }
-
-    @Override
-    public VerificationDetailsDto findDetails(Long staffEvaluationUserId, Long verifierId, String questionUuid) {
+    public VerificationDetailsDto findDetails(Long staffEvaluationUserId, Long verifierId) {
         var staffEvaluationUser = findStaffEvaluationUser(staffEvaluationUserId, verifierId);
         var positions = questionPositionMapOf(staffEvaluationUser);
         var answers = sortedAnswers(staffEvaluationUserId, positions);
         checkAnswers(answers);
-        var currentAnswer = getCurrentAnswer(answers, questionUuid);
-        var currentIndex = answers.indexOf(currentAnswer);
         var verifiedQuestionCount = countVerifiedQuestions(answers);
+        var staffEvaluation = staffEvaluationUser.getStaffEvaluation();
         return VerificationDetailsDto.builder()
             .staffAssignmentUserId(staffEvaluationUser.getId())
-            .name(staffEvaluationUser.getStaffEvaluation().getName())
+            .name(staffEvaluation.getName())
+            .dateFrom(staffEvaluation.getDateFrom())
+            .dateTo(staffEvaluation.getDateTo())
             .employeeName(staffEvaluationUser.getUser().getDisplayName())
             .employeeUsername(staffEvaluationUser.getUser().getUsername())
             .feedback(staffEvaluationUser.getFeedbackMessage())
             .questions(questionsOf(answers, positions))
-            .currentQuestion(questionOf(currentAnswer, positions.get(currentAnswer.getQuestion().getId())))
-            .currentNumber(currentIndex + 1)
             .verifiedQuestionsCount(verifiedQuestionCount)
             .canFinish(verifiedQuestionCount == answers.size())
             .build();
@@ -89,9 +75,9 @@ public class VerificationServiceImpl implements VerificationService {
 
     @Override
     @Transactional
-    public void save(Long assignmentId, Long verifierId, VerificationFormDto form, boolean finish) {
-        var assignment = findStaffEvaluationUser(assignmentId, verifierId);
-        var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(assignmentId);
+    public void save(Long staffEvaluationUserId, Long verifierId, VerificationFormDto form) {
+        findStaffEvaluationUser(staffEvaluationUserId, verifierId);
+        var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(staffEvaluationUserId);
         var answer = answers.stream()
             .filter(value -> value.getId().equals(form.answerId()))
             .findFirst()
@@ -99,18 +85,24 @@ public class VerificationServiceImpl implements VerificationService {
         answer.setVerifiedResponse(form.response());
         answer.setVerificationComment(normalizeComment(form.comment()));
         staffEvaluationAnswerRepository.save(answer);
-
-        if (finish) {
-            completeVerification(assignment, answers);
-        }
     }
 
-    private StaffEvaluationAnswer getCurrentAnswer(List<StaffEvaluationAnswer> staffEvaluationAnswers,
-                                                   String questionUuid) {
-        return staffEvaluationAnswers.stream()
-            .filter(answer -> answer.getQuestion().getUuid().equals(questionUuid))
-            .findFirst()
-            .orElseThrow(this::questionNotFound);
+    @Override
+    @Transactional
+    public void confirmAll(Long staffEvaluationUserId, Long verifierId) {
+        findStaffEvaluationUser(staffEvaluationUserId, verifierId);
+        var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(staffEvaluationUserId);
+        checkAnswers(answers);
+        answers.forEach(answer -> answer.setVerifiedResponse(YES));
+        staffEvaluationAnswerRepository.saveAll(answers);
+    }
+
+    @Override
+    @Transactional
+    public void complete(Long assignmentId, Long verifierId) {
+        var assignment = findStaffEvaluationUser(assignmentId, verifierId);
+        var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(assignmentId);
+        completeVerification(assignment, answers);
     }
 
     private List<VerificationQuestionDto> questionsOf(List<StaffEvaluationAnswer> staffEvaluationAnswers,
@@ -181,6 +173,8 @@ public class VerificationServiceImpl implements VerificationService {
             .dateTo(staffEvaluation.getDateTo())
             .employeeName(assignment.getUser().getDisplayName())
             .employeeUsername(assignment.getUser().getUsername())
+            .staffEvaluationStatus(staffEvaluation.getStatus())
+            .staffEvaluationUserStatus(assignment.getStatus())
             .build();
     }
 
@@ -210,14 +204,6 @@ public class VerificationServiceImpl implements VerificationService {
         return errorOf(
             NOT_FOUND,
             messageSource.getMessage("error.staff-evaluation-user-not-found", new Object[]{}, getLocale())
-        );
-    }
-
-    private WebApplicationException questionNotFound() {
-        return errorOf(
-            NOT_FOUND,
-            messageSource.getMessage("error.question-not-found", new Object[]{},
-                getLocale())
         );
     }
 

@@ -22,7 +22,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static jakarta.persistence.CascadeType.ALL;
+import static java.lang.String.format;
 import static ru.otus.entity.enums.StaffEvaluationStatus.DRAFT;
+import static ru.otus.utils.DateUtils.FORMATTER;
 
 @Getter
 @Setter
@@ -59,4 +61,8 @@ public class StaffEvaluation {
     @Builder.Default
     @OneToMany(mappedBy = "staffEvaluation", cascade = ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<StaffEvaluationQuestion> staffEvaluationQuestions = new HashSet<>();
+
+    public String displayName() {
+        return format("%s (%s - %s)",  name, dateFrom.format(FORMATTER), dateTo.format(FORMATTER));
+    }
 }

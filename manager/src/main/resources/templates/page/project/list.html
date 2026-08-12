@@ -69,7 +69,7 @@
                 <td th:text="${project.id}">1</td>
                 <td th:text="${project.name}">Project</td>
                 <td>
-                    <span th:text="${project.ownerUsername}">Owner</span>
+                    <span th:text="${project.owner != null ? project.owner.username : ''}">Owner</span>
                 </td>
                 <td style="max-width: 32rem; white-space: normal; overflow-wrap: anywhere;">
                     <span th:text="${project.description ?: '—'}">Description</span>
@@ -103,7 +103,8 @@
                             <i class="fas fa-list-check"></i>
                         </a>
                         <a class="btn btn-outline-secondary btn-sm"
-                           th:if="${#authentication.name.equals(project.ownerUsername)}"
+                           th:if="${(project.owner != null ? project.owner.username : '').equals(#authentication.name) ||
+                           project.editAccessManagers.![username].contains(#authentication.name)}"
                            th:href="@{/projects/{id}/access(id=${project.id})}"
                            th:title="#{manager.project-access}"
                            th:aria-label="#{manager.project-access}">

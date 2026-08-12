@@ -9,7 +9,6 @@ public record SurveyAnswerCommand(
     String projectRole,
     String questionUuid,
     Long userId,
-    AnswerResponse response,
-    boolean finish
+    AnswerResponse response
 ) {
 }

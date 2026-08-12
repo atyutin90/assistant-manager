@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.otus.annotations.CurrentUserParam;
 import ru.otus.dto.CurrentUser;
-import ru.otus.services.ProjectService;
+import ru.otus.services.project.ProjectService;
 
 import java.util.Set;
 
@@ -25,7 +25,7 @@ public class ProjectAccessPageController implements AbstractPageController {
                          @CurrentUserParam CurrentUser currentUser,
                          Model model) {
         var userId = currentUser.id();
-        model.addAttribute(PROJECT, projectService.findByIdAndOwnerId(id, userId));
+        model.addAttribute(PROJECT, projectService.findEditableById(id, userId));
         model.addAttribute(MANAGERS, projectService.findManagerAccessOptions(id, userId));
         return "page/project/access";
     }
@@ -33,11 +33,12 @@ public class ProjectAccessPageController implements AbstractPageController {
     @PostMapping("/projects/{id}/access")
     public String saveAccess(
         @PathVariable Long id,
-        @RequestParam(required = false) Set<Long> managerIds,
+        @RequestParam(required = false) Set<Long> readManagerIds,
+        @RequestParam(required = false) Set<Long> editManagerIds,
         @CurrentUserParam CurrentUser currentUser,
         RedirectAttributes redirectAttributes
     ) {
-        projectService.saveAccess(id, currentUser.id(), managerIds);
+        projectService.saveAccess(id, currentUser.id(), readManagerIds, editManagerIds);
         redirectAttributes.addFlashAttribute(SUCCESS_OPERATION, true);
         return "redirect:/projects/%d/access".formatted(id);
     }

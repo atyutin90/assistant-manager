@@ -19,6 +19,8 @@ public interface AbstractPageController {
 
     String ID = "id";
 
+    String UUID ="uuid";
+
     String CURRENT_PAGE = "currentPage";
 
     String TOTAL_PAGES = "totalPages";
@@ -88,6 +90,8 @@ public interface AbstractPageController {
     String SHOW_PASSWORD_MODAL = "showPasswordModal";
 
     String FINISH = "finish";
+
+    String SOURCE = "source";
 
     default <T> void pageAttribute(Model model, Pageable pageable, Page<T> page, PageDataFilter filter) {
         pageAttribute(model, pageable, page);

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toSet;
@@ -105,7 +106,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<IdAndValue> findTeamLeads(Long excludedUserId) {
         var teamLeads = excludedUserId != null
-            ? userRepository.findByRolesContainsAndIdNot(TEAM_LEAD, excludedUserId)
+            ? userRepository.findByRolesContainsAndIdNotIn(TEAM_LEAD, Set.of(excludedUserId))
             : userRepository.findByRolesContains(TEAM_LEAD);
         return teamLeads.stream()
             .map(user -> IdAndValue.builder()

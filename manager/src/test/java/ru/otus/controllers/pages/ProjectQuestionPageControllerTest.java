@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
+import ru.otus.dto.CsvProjectQuestionDto;
 import ru.otus.dto.ProjectDto;
 import ru.otus.dto.ProjectQuestionLevelDto;
 import ru.otus.dto.ProjectQuestionsForm;
@@ -17,7 +19,8 @@ import ru.otus.dto.UserDto;
 import ru.otus.services.CareerLevelService;
 import ru.otus.services.JwtService;
 import ru.otus.services.ProjectRoleService;
-import ru.otus.services.ProjectService;
+import ru.otus.services.csv.ProjectQuestionCsvService;
+import ru.otus.services.project.ProjectService;
 import ru.otus.services.SkillService;
 import ru.otus.services.UserService;
 
@@ -30,11 +33,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static ru.otus.controllers.pages.AbstractPageController.CAREER_LEVELS;
 import static ru.otus.controllers.pages.AbstractPageController.FILTER;
@@ -63,6 +69,9 @@ class ProjectQuestionPageControllerTest {
 
     @MockitoBean
     private SkillService skillService;
+
+    @MockitoBean
+    private ProjectQuestionCsvService csvService;
 
     @MockitoBean
     private UserService userService;
@@ -119,5 +128,44 @@ class ProjectQuestionPageControllerTest {
         verify(projectService).saveQuestions(
             eq(3L), eq(5L), eq(2L), any(ProjectQuestionsForm.class)
         );
+    }
+
+    @Test
+    @DisplayName("CSV с уровнями вопросов проекта должен загружаться")
+    void shouldUploadProjectQuestions() throws Exception {
+        mvc.perform(multipart("/projects/3/questions/upload")
+                .file("file", "uuid;career-level".getBytes())
+                .with(user("manager")))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/projects/3/questions"))
+            .andExpect(flash().attribute(SUCCESS_OPERATION, true));
+
+        verify(csvService).upload(eq(3L), eq(5L), any(MultipartFile.class));
+    }
+
+    @Test
+    @DisplayName("CSV с уровнями вопросов проекта должен скачиваться с учетом фильтров")
+    void shouldDownloadProjectQuestions() throws Exception {
+        when(csvService.download(eq(3L), eq(5L), any())).thenReturn(List.of(
+            CsvProjectQuestionDto.builder()
+                .uuid("question-1")
+                .projectRole("Developer")
+                .skill("4")
+                .areaKnowledge("Java")
+                .section("Core")
+                .text("Question")
+                .careerLevel("MIDDLE")
+                .build()
+        ));
+
+        mvc.perform(get("/projects/3/questions/download")
+                .with(user("manager")))
+            .andExpect(status().isOk())
+            .andExpect(header().string(
+                "Content-Disposition", "attachment; filename=\"project-questions.csv\""
+            ))
+            .andExpect(content().contentType("text/csv; charset=UTF-8"));
+
+        verify(csvService).download(eq(3L), eq(5L), any());
     }
 }

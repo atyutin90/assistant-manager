@@ -138,10 +138,14 @@
                     <td th:text="${question.areaKnowledge}">Area</td>
                     <td th:text="${question.section}">Section</td>
                     <td>
-                        <a class="btn btn-outline-secondary btn-sm" th:href="@{/questions/{id}(id=${question.id})}"
-                           th:title="#{staff-evaluations.question-card}" th:aria-label="#{staff-evaluations.question-card}">
+                        <button class="btn btn-outline-secondary btn-sm"
+                                type="button"
+                                data-bs-toggle="modal"
+                                th:attr="data-bs-target=|#questionDetailsModal-${question.id}|"
+                                th:title="#{staff-evaluation.question-card}"
+                                th:aria-label="#{staff-evaluation.question-card}">
                             <i class="fa-solid fa-question"></i>
-                        </a>
+                        </button>
                     </td>
                 </tr>
                 </tbody>
@@ -151,6 +155,69 @@
     <div th:replace="~{fragments/admin-paging :: qualifiedPagination(
         ${source}, 'assigned', ${assignedCurrentPage}, ${assignedTotalPages}, ${assignedPageSize},
         ${assignedSortField}, ${assignedSortDirection}, ${assignedQuestionExtraQuery})}"></div>
+
+    <div th:each="question : ${assignedQuestions}"
+         class="modal fade"
+         th:id="|questionDetailsModal-${question.id}|"
+         tabindex="-1"
+         th:attr="aria-labelledby=|questionDetailsModalLabel-${question.id}|"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5"
+                        th:id="|questionDetailsModalLabel-${question.id}|"
+                        th:text="#{staff-evaluation.question-card}">Question card</h2>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            th:title="#{cancel}"
+                            th:aria-label="#{cancel}">
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="small text-muted" th:text="#{question.uuid}">UUID</div>
+                            <div class="fw-semibold text-break" th:text="${question.uuid}">UUID</div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="small text-muted" th:text="#{project-role}">Project role</div>
+                            <div class="fw-semibold">
+                                <span th:each="role : ${projectRoles}"
+                                      th:if="${role.id == question.projectRole}"
+                                      th:text="${role.value}">Project role</span>
+                                <span th:if="${question.projectRole == null}">&mdash;</span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="small text-muted" th:text="#{question.skill}">Skill</div>
+                            <div class="fw-semibold">
+                                <span th:each="skill : ${skills}"
+                                      th:if="${skill.id == question.skill}"
+                                      th:text="${skill.value}">Skill</span>
+                                <span th:if="${question.skill == null}">&mdash;</span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="small text-muted" th:text="#{question.area-knowledge}">Area knowledge</div>
+                            <div class="fw-semibold" th:text="${#strings.isEmpty(question.areaKnowledge) ? '—' : question.areaKnowledge}">Area knowledge</div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="small text-muted" th:text="#{question.section}">Section</div>
+                            <div class="fw-semibold" th:text="${#strings.isEmpty(question.section) ? '—' : question.section}">Section</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted" th:text="#{question.text}">Question text</div>
+                            <div class="fw-semibold text-break" style="white-space: pre-wrap" th:text="${question.text}">Question text</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div th:if="${staffEvaluation.canAdd()}" class="modal fade" id="addQuestionsModal" tabindex="-1"
          aria-labelledby="addQuestionsModalLabel" aria-hidden="true">

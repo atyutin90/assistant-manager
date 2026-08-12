@@ -20,6 +20,8 @@ public interface PageDataFilter {
 
     String ENABLED = "enabled";
 
+    String STATUS = "status";
+
     String buildExtraQuery();
 
     default void appendQueryParam(StringBuilder query, String name, Object value) {

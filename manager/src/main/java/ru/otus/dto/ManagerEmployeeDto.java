@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record ManagerUserDto(
+public record ManagerEmployeeDto(
     Long id,
     String lastName,
     String middleName,
@@ -14,5 +14,6 @@ public record ManagerUserDto(
     String email,
     Long projectRoleId,
     String projectRole,
+    Long staffEvaluationId,
     List<ManagerSkillLevelDto> skillLevels
 ) { }

@@ -16,7 +16,6 @@
     </div>
 
     <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{employee.project-saved})}"></div>
-    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
 
     <form class="row g-3"
           th:method="post"

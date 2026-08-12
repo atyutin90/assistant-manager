@@ -8,11 +8,12 @@ import ru.otus.entity.StaffEvaluation;
 import ru.otus.entity.enums.StaffEvaluationStatus;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface StaffEvaluationRepository extends
     JpaRepository<StaffEvaluation, Long>,
     JpaSpecificationExecutor<StaffEvaluation> {
 
-    List<StaffEvaluation> findAllByStatusOrderByDateFromDesc(StaffEvaluationStatus status, Limit limit);
+    List<StaffEvaluation> findAllByStatusInOrderByDateFromDesc(Set<StaffEvaluationStatus> statuses, Limit limit);
 }

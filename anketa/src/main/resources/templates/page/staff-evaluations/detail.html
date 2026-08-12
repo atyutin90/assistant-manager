@@ -22,7 +22,7 @@
             <div class="d-flex align-items-center gap-2">
                 <span class="badge"
                       th:classappend="${result.status.name() == 'COMPLETED' ? 'text-bg-success' : 'text-bg-warning'}"
-                      th:text="${#messages.msg('SurveyStatus.' + result.status.name())}">
+                      th:text="${#messages.msg('StaffEvaluationUserStatus.' + result.status.name())}">
                     Completed
                 </span>
                 <div class="btn-group" role="group">

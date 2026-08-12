@@ -5,9 +5,9 @@ spring:
   application:
     name: administration
   datasource:
-    url: jdbc:postgresql://localhost:5433/assistant_db
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=assistant_db2
     username: postgres
-    password: postgres
+    password: example
   flyway:
     enabled: true
   jpa:
@@ -44,4 +44,5 @@ app:
     secure-cookie: true
   default-password: "1111"
   kafka:
+    enabled: false
     email-topic: email-topic

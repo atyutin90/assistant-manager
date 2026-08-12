@@ -64,11 +64,11 @@
         <div class="row g-2 mb-2 align-items-end">
             <div class="col-md-12">
                 <select id="staffEvaluation" name="staffEvaluation" class="form-select">
-                    <option value="" th:text="#{manager.select-staff-evaluation}">All staff evaluations</option>
+                    <option value="" th:text="#{manager.staff-evaluation-last}">All staff evaluations</option>
                     <option th:each="item : ${staffEvaluations}"
                             th:value="${item.id}"
                             th:selected="${item.id == filter.staffEvaluation}"
-                            th:text="${item.name + ' (' + #temporals.format(item.dateFrom, 'dd.MM.yyyy') + ')'}">
+                            th:text="${item.name}">
                         Staff evaluation
                     </option>
                 </select>
@@ -94,6 +94,12 @@
                th:aria-label="#{reset-search}">
                 <i class="fa-solid fa-broom"></i>
             </a>
+        </div>
+
+        <div th:if="${filter.project == null}"
+             class="mt-2 alert alert-info"
+             th:text="#{manager.select-project-for-results}">
+            Select a project to display results
         </div>
     </form>
 
@@ -122,6 +128,20 @@
                                 <span th:text="${user.email ?: '—'}">Email</span>
                             </div>
                         </div>
+                        <a th:if="${user.staffEvaluationId != null}"
+                           class="btn btn-outline-primary btn-sm flex-shrink-0"
+                           th:href="@{/employees/{id}/detail(id=${user.id}, staffEvaluation=${user.staffEvaluationId}, project=${filter.project})}"
+                           th:title="#{staff-evaluation-results.open}"
+                           th:aria-label="#{staff-evaluation-results.open}">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button th:unless="${user.staffEvaluationId != null}"
+                                class="btn btn-outline-secondary btn-sm flex-shrink-0"
+                                type="button"
+                                th:title="#{manager.employee-results-unavailable}"
+                                th:aria-label="#{manager.employee-results-unavailable}">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
 
                     <div class="mb-3">
@@ -152,11 +172,6 @@
                                     INTERN</span>
                             </div>
                         </div>
-                    </div>
-
-                    <div th:if="${filter.project == null}" class="alert alert-light border small text-muted mt-auto mb-0"
-                         th:text="#{manager.select-project-for-levels}">
-                        Select a project to calculate levels
                     </div>
                 </div>
             </article>

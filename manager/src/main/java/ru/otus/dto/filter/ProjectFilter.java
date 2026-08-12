@@ -5,6 +5,7 @@ import ru.otus.dto.page.PageDataFilter;
 
 @Builder
 public record ProjectFilter(
+    Boolean active,
     String search,
     Long managerId
 ) implements PageDataFilter {

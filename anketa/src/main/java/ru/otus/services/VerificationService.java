@@ -10,9 +10,11 @@ public interface VerificationService {
 
     Page<VerificationItemDto> findPending(Long userId, Pageable pageable);
 
-    String findStartQuestion(Long userId, Long verifierId);
+    VerificationDetailsDto findDetails(Long staffEvaluationUserId, Long verifierId);
 
-    VerificationDetailsDto findDetails(Long userId, Long verifierId, String questionUuid);
+    void save(Long staffEvaluationUserId, Long verifierId, VerificationFormDto form);
 
-    void save(Long userId, Long verifierId, VerificationFormDto form, boolean finish);
+    void confirmAll(Long staffEvaluationUserId, Long verifierId);
+
+    void complete(Long staffEvaluationUserId, Long verifierId);
 }

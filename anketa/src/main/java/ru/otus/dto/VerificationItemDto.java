@@ -1,6 +1,8 @@
 package ru.otus.dto;
 
 import lombok.Builder;
+import ru.otus.entity.enums.StaffEvaluationStatus;
+import ru.otus.entity.enums.StaffEvaluationUserStatus;
 
 import java.time.LocalDate;
 
@@ -11,6 +13,8 @@ public record VerificationItemDto(
     LocalDate dateFrom,
     LocalDate dateTo,
     String employeeName,
-    String employeeUsername
+    String employeeUsername,
+    StaffEvaluationStatus staffEvaluationStatus,
+    StaffEvaluationUserStatus staffEvaluationUserStatus
 ) {
 }

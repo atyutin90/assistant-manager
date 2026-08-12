@@ -146,7 +146,9 @@ CREATE TABLE IF NOT EXISTS assessment_project_access
 (
     project_id BIGINT NOT NULL,
     manager_id BIGINT NOT NULL,
+    read_access BOOLEAN DEFAULT FALSE NOT NULL,
+    edit_access BOOLEAN DEFAULT FALSE NOT NULL,
     CONSTRAINT fk_assessment_project_access_project_id FOREIGN KEY (project_id) REFERENCES assessment_project (id) ON DELETE CASCADE,
     CONSTRAINT fk_assessment_project_access_manager_id FOREIGN KEY (manager_id) REFERENCES users (id),
-    CONSTRAINT unq_assessment_project_access UNIQUE (project_id, manager_id)
+    CONSTRAINT pk_assessment_project_access PRIMARY KEY (project_id, manager_id)
 );

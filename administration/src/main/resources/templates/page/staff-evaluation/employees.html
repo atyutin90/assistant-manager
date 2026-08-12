@@ -127,12 +127,14 @@
                         th:text="''">Project role</td>
                     <td>
                         <div class="btn-group flex-nowrap" role="group">
-                            <a class="btn btn-outline-secondary btn-sm"
-                               th:href="@{/users/{id}(id=${employee.id})}"
+                            <button class="btn btn-outline-secondary btn-sm"
+                               type="button"
+                               data-bs-toggle="modal"
+                               th:attr="data-bs-target=|#employeeDetailsModal-${employee.id}|"
                                th:title="#{staff-evaluation.employee-card}"
                                th:aria-label="#{staff-evaluation.employee-card}">
                                 <i class="fa-solid fa-user"></i>
-                            </a>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -143,6 +145,81 @@
     <div th:replace="~{fragments/admin-paging :: qualifiedPagination(
         ${source}, 'assigned', ${assignedCurrentPage}, ${assignedTotalPages}, ${assignedPageSize},
         ${assignedSortField}, ${assignedSortDirection}, ${assignedExtraQuery})}"></div>
+
+    <div th:each="employee : ${assignedEmployees}"
+         class="modal fade"
+         th:id="|employeeDetailsModal-${employee.id}|"
+         tabindex="-1"
+         th:attr="aria-labelledby=|employeeDetailsModalLabel-${employee.id}|"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5"
+                        th:id="|employeeDetailsModalLabel-${employee.id}|"
+                        th:text="#{staff-evaluation.employee-card}">Employee card</h2>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            th:title="#{cancel}"
+                            th:aria-label="#{cancel}">
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="small text-muted" th:text="#{employee.last-name}">Last name</div>
+                            <div class="fw-semibold" th:text="${employee.lastName}">LastName</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted" th:text="#{employee.middle-name}">Middle name</div>
+                            <div class="fw-semibold" th:text="${employee.middleName}">MiddleName</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted" th:text="#{employee.first-name}">First name</div>
+                            <div class="fw-semibold" th:text="${employee.firstName}">FirstName</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted" th:text="#{employee.username}">Username</div>
+                            <div class="fw-semibold" th:text="${employee.username}">Username</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted" th:text="#{employee.email}">Email</div>
+                            <div class="fw-semibold" th:text="${employee.email}">employee@example.com</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted" th:text="#{employee.project-role}">Project role</div>
+                            <div class="fw-semibold">
+                                <span th:each="projectRole : ${projectRoles}"
+                                      th:if="${projectRole.id == employee.projectRole}"
+                                      th:text="${projectRole.value}">Project role</span>
+                                <span th:if="${employee.projectRole == null}">&mdash;</span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="small text-muted" th:text="#{employee.current-level}">Current level</div>
+                            <div class="fw-semibold">
+                                <span th:each="careerLevel : ${careerLevels}"
+                                      th:if="${careerLevel.id == employee.currentLevel}"
+                                      th:text="${careerLevel.value}">Current level</span>
+                                <span th:if="${employee.currentLevel == null}">&mdash;</span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted" th:text="#{employee.labor-code-position}">Labor code position</div>
+                            <div class="fw-semibold" th:text="${#strings.isEmpty(employee.laborCodePosition) ? '—' : employee.laborCodePosition}">Position</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted" th:text="#{employee.responsible}">Responsible</div>
+                            <div class="fw-semibold" th:text="${#strings.isEmpty(employee.responsible) ? '—' : employee.responsible}">Responsible</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div th:if="${staffEvaluation.canAdd()}" class="modal fade" id="addEmployeesModal" tabindex="-1"
          aria-labelledby="addEmployeesModalLabel" aria-hidden="true">
