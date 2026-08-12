@@ -59,7 +59,6 @@ public class SurveyPageController implements AbstractPageController {
         @PathVariable Long staffEvaluationId,
         @PathVariable String projectRole,
         @PathVariable String uuid,
-        @RequestParam String action,
         @Valid @ModelAttribute(ANSWER) SurveyAnswerDto answer,
         BindingResult bindingResult,
         @CurrentUserParam CurrentUser currentUser,
@@ -70,7 +69,6 @@ public class SurveyPageController implements AbstractPageController {
             model.addAttribute(SURVEY, question);
             return "page/survey/question";
         }
-        var finish = FINISH.equals(action);
         surveyService.saveAnswer(
             SurveyAnswerCommand.builder()
                 .staffEvaluationId(staffEvaluationId)
@@ -78,9 +76,18 @@ public class SurveyPageController implements AbstractPageController {
                 .questionUuid(uuid)
                 .userId(currentUser.id())
                 .response(answer.response())
-                .finish(finish)
                 .build());
-        return finish ? "redirect:/staff-evaluations" : surveyRedirect(staffEvaluationId, projectRole);
+        return surveyRedirect(staffEvaluationId, projectRole);
+    }
+
+    @PostMapping("/survey/{staffEvaluationUserId}/{projectRole}/complete")
+    public String complete(
+        @PathVariable Long staffEvaluationUserId,
+        @CurrentUserParam CurrentUser currentUser,
+        @PathVariable String projectRole
+    ) {
+        surveyService.complete(staffEvaluationUserId, currentUser.id(), projectRole);
+        return "redirect:/staff-evaluations";
     }
 
     @GetMapping("/survey/{staffEvaluationId}/feedback")

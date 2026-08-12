@@ -1,4 +1,4 @@
-package ru.otus.services;
+package ru.otus.services.project;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.otus.converters.ProjectDtoConverter;
 import ru.otus.dto.ManagerAccessDto;
 import ru.otus.dto.ProjectDto;
 import ru.otus.dto.filter.ProjectFilter;
@@ -14,6 +15,8 @@ import ru.otus.dto.ProjectQuestionLevelDto;
 import ru.otus.dto.ProjectQuestionsForm;
 import ru.otus.dto.filter.QuestionFilter;
 import ru.otus.entity.AssessmentProject;
+import ru.otus.entity.AssessmentProjectAccess;
+import ru.otus.entity.AssessmentProjectAccessId;
 import ru.otus.entity.AssessmentProjectQuestion;
 import ru.otus.entity.CareerLevel;
 import ru.otus.entity.Question;
@@ -30,15 +33,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static java.lang.Boolean.TRUE;
 import static java.lang.Math.min;
-import static java.util.Set.of;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
+import static ru.otus.converters.ProjectDtoConverter.dtoOf;
 import static ru.otus.dto.filter.specification.ProjectSpecification.projectFilterSpecification;
 import static ru.otus.dto.filter.specification.QuestionSpecification.questionFilterSpecification;
 import static ru.otus.entity.enums.UserRole.MANAGER;
@@ -68,13 +72,13 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Page<ProjectDto> findAll(ProjectFilter filter, Pageable pageable) {
         return projectRepository.findAll(projectFilterSpecification(filter), pageable)
-            .map(this::dtoOf);
+            .map(ProjectDtoConverter::dtoOf);
     }
 
     @Override
     public List<ProjectDto> findAll(ProjectFilter filter) {
         return projectRepository.findAll(projectFilterSpecification(filter), Sort.by(NAME)).stream()
-            .map(this::dtoOf)
+            .map(ProjectDtoConverter::dtoOf)
             .toList();
     }
 
@@ -97,7 +101,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .owner(owner)
                 .build();
         } else {
-            project = findAccessibleProject(data.id(), userId);
+            project = findEditableProject(data.id(), userId);
             validateUniqueName(data, project.getOwner().getId());
             project.setName(data.name());
             project.setDescription(data.description());
@@ -149,7 +153,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public void saveQuestions(Long projectId, Long userId, Long projectRoleId, ProjectQuestionsForm form) {
-        var project = findAccessibleProject(projectId, userId);
+        var project = findEditableProject(projectId, userId);
         var questionMap = questionsMap(form, projectRoleId);
         var existProjectQuestionMap = assignedLevelMapOf(projectId, questionMap.keySet().stream().toList());
         var deleteProjectQuestions = getDeleteProjectQuestions(form, existProjectQuestionMap);
@@ -159,32 +163,62 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDto findByIdAndOwnerId(Long id, Long userId) {
-        return dtoOf(getByIdAndOwnerId(id, userId));
+    public ProjectDto findEditableById(Long id, Long userId) {
+        return dtoOf(findEditableProject(id, userId));
     }
 
     @Override
     public List<ManagerAccessDto> findManagerAccessOptions(Long projectId, Long userId) {
-        var project = getByIdAndOwnerId(projectId, userId);
-        var selectedIds = project.getSharedManagers().stream()
-            .map(User::getId)
-            .collect(toSet());
-        return userRepository.findByRolesContainsAndIdNot(MANAGER, project.getOwner().getId()).stream()
-            .map(manager -> managerOf(manager, selectedIds))
+        var project = findEditableProject(projectId, userId);
+        var accessManagerMap = project.getAccesses().stream()
+            .collect(toMap(access -> access.getManager().getId(), identity()));
+        return userRepository.findByRolesContainsAndIdNotIn(MANAGER,
+                Stream.of(project.getOwner().getId(), userId).collect(toSet())
+            ).stream()
+            .map(manager -> managerOf(manager, accessManagerMap.get(manager.getId())))
             .toList();
     }
 
     @Override
     @Transactional
-    public void saveAccess(Long projectId, Long userId, Set<Long> managerIds) {
-        var project = getByIdAndOwnerId(projectId, userId);
-        var requestedIds = managerIds == null ? of() : managerIds;
-        var managers = userRepository.findByRolesContainsAndIdNot(MANAGER, project.getOwner().getId()).stream()
-            .filter(manager -> requestedIds.contains(manager.getId()))
-            .collect(toSet());
-        project.getSharedManagers().clear();
-        project.getSharedManagers().addAll(managers);
+    public void saveAccess(Long projectId, Long userId, Set<Long> readManagerIds, Set<Long> editManagerIds) {
+        var project = findEditableProject(projectId, userId);
+        var requestedReadIds = readManagerIds != null ? readManagerIds : Set.<Long>of();
+        var requestedEditIds = editManagerIds != null ? editManagerIds : Set.<Long>of();
+        var managerMap = userRepository.findByRolesContainsAndIdNotIn(MANAGER,
+                Stream.of(project.getOwner().getId(), userId).collect(toSet())
+            ).stream()
+            .filter(manager -> requestedReadIds.contains(manager.getId()) || requestedEditIds.contains(manager.getId()))
+            .collect(toMap(User::getId, identity()));
+        synchronizeAccess(project, managerMap, requestedReadIds, requestedEditIds);
         projectRepository.save(project);
+    }
+
+    private static void synchronizeAccess(AssessmentProject project, Map<Long, User> managerMap,
+                                          Set<Long> requestedReadIds, Set<Long> requestedEditIds) {
+        project.getAccesses()
+            .removeIf(access -> !managerMap.containsKey(access.getManager().getId()));
+        var accessManagerMap = project.getAccesses().stream()
+            .collect(toMap(access -> access.getManager().getId(), identity()));
+        for (var entry : managerMap.entrySet()) {
+            var managerId = entry.getKey();
+            var access = accessManagerMap.get(managerId);
+            if (access == null) {
+                access = AssessmentProjectAccess.builder()
+                    .id(AssessmentProjectAccessId.builder().projectId(project.getId()).managerId(managerId).build())
+                    .project(project)
+                    .manager(entry.getValue())
+                    .build();
+                project.getAccesses().add(access);
+            }
+            access.setReadAccess(requestedReadIds.contains(managerId) || requestedEditIds.contains(managerId));
+            access.setEditAccess(requestedEditIds.contains(managerId));
+        }
+    }
+
+    @Override
+    public boolean canEdit(Long projectId, Long userId) {
+        return projectRepository.findEditableById(projectId, userId).isPresent();
     }
 
     private List<AssessmentProjectQuestion> getUpsertProjectQuestions(
@@ -202,7 +236,7 @@ public class ProjectServiceImpl implements ProjectService {
                 if (projectQuestion != null && value.careerLevelId() != null) {
                     projectQuestion.setCareerLevel(careerLevelMap.get(value.careerLevelId()));
                     result = projectQuestion;
-                } else if (projectQuestion == null) {
+                } else if (projectQuestion == null && value.careerLevelId() != null) {
                     result = AssessmentProjectQuestion.builder()
                         .project(project)
                         .question(questionMap.get(value.questionId()))
@@ -256,6 +290,10 @@ public class ProjectServiceImpl implements ProjectService {
         return projectRepository.findAccessibleById(id, managerId).orElseThrow(() -> notFound(id));
     }
 
+    private AssessmentProject findEditableProject(Long id, Long managerId) {
+        return projectRepository.findEditableById(id, managerId).orElseThrow(() -> notFound(id));
+    }
+
     private AssessmentProject getByIdAndOwnerId(Long id, Long managerId) {
         return projectRepository.findByIdAndOwnerId(id, managerId).orElseThrow(() -> notFound(id));
     }
@@ -299,24 +337,13 @@ public class ProjectServiceImpl implements ProjectService {
         return candidate;
     }
 
-    private ProjectDto dtoOf(AssessmentProject project) {
-        var owner = project.getOwner();
-        return ProjectDto.builder()
-            .id(project.getId())
-            .name(project.getName())
-            .description(project.getDescription())
-            .active(project.getActive())
-            .ownerId(owner != null ? owner.getId() : null)
-            .ownerUsername(owner != null ? owner.getUsername() : null)
-            .build();
-    }
-
-    private ManagerAccessDto managerOf(User manager, Set<Long> selectedIds) {
+    private static ManagerAccessDto managerOf(User manager, AssessmentProjectAccess access) {
         return ManagerAccessDto.builder()
             .id(manager.getId())
             .name(manager.getDisplayName())
             .username(manager.getUsername())
-            .selected(selectedIds.contains(manager.getId()))
+            .readAllowed(access != null && TRUE.equals(access.getReadAccess()))
+            .editAllowed(access != null && TRUE.equals(access.getEditAccess()))
             .build();
     }
 
@@ -330,7 +357,7 @@ public class ProjectServiceImpl implements ProjectService {
             .collect(toMap(value -> value.getQuestion().getId(), identity()));
     }
 
-    private ProjectQuestionLevelDto questionOf(Question question, AssessmentProjectQuestion assignedLevel) {
+    private static ProjectQuestionLevelDto questionOf(Question question, AssessmentProjectQuestion assignedLevel) {
         return ProjectQuestionLevelDto.builder()
             .questionId(question.getId())
             .enabled(question.getEnabled())

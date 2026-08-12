@@ -14,8 +14,6 @@ public interface StaffEvaluationController extends AbstractPageController {
 
     String SEARCH = "search";
 
-    String SOURCE = "source";
-
     String CURRENT_PAGE = "CurrentPage";
 
     String TOTAL = "Total";

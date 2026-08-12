@@ -12,6 +12,8 @@ public interface SurveyService {
 
     void saveAnswer(SurveyAnswerCommand command);
 
+    void complete(Long staffEvaluationUserId, Long userId, String projectRole);
+
     FeedbackFormDto findFeedback(Long staffEvaluationId, Long userId);
 
     void saveFeedback(Long staffEvaluationId, Long userId, FeedbackFormDto feedback, boolean finish);

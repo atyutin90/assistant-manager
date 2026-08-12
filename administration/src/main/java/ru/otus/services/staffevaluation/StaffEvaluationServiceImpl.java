@@ -12,6 +12,7 @@ import ru.otus.dto.StaffEvaluationQuestionsDto;
 import ru.otus.dto.StaffEvaluationDto;
 import ru.otus.dto.filter.StaffEvaluationFilter;
 import ru.otus.dto.filter.UserFilter;
+import ru.otus.entity.ProjectRole;
 import ru.otus.entity.Question;
 import ru.otus.entity.StaffEvaluation;
 import ru.otus.entity.StaffEvaluationQuestion;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
@@ -279,6 +281,24 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
         if (isEmpty(staffEvaluation.getStaffEvaluationQuestions())) {
             throw statusExceptionOf("error.staff-evaluation.start-without-questions");
         }
+
+        if (checkCountQuestionsForProjectRole(staffEvaluation)) {
+            throw statusExceptionOf("error.staff-evaluation.start-without-questions-for-project-role");
+        }
+    }
+
+    private static boolean checkCountQuestionsForProjectRole(StaffEvaluation staffEvaluation) {
+        Map<ProjectRole, Long> map = staffEvaluation.getStaffEvaluationQuestions().stream()
+            .collect(Collectors.groupingBy(
+                q -> q.getQuestion().getProjectRole(),
+                Collectors.counting()
+            ));
+
+        return staffEvaluation.getStaffEvaluationUsers().stream()
+            .map(StaffEvaluationUser::getUser)
+            .filter(Objects::nonNull)
+            .map(User::getProjectRole)
+            .anyMatch(pr -> map.get(pr) == null || map.get(pr) == 0);
     }
 
     private void sendActivationMessages(StaffEvaluation staffEvaluation) {
@@ -364,9 +384,9 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
         staffEvaluation.getStaffEvaluationUsers().forEach(it -> syncAnswers(it, questionMap));
     }
 
-    private void syncAnswers(StaffEvaluationUser staffEvaluationUser, Map<Long, Question> questionsById) {
+    private void syncAnswers(StaffEvaluationUser staffEvaluationUser, Map<Long, Question> questionMap) {
         staffEvaluationUser.getAnswers()
-            .removeIf(it -> it.getQuestion() == null || !questionsById.containsKey(it.getQuestion().getId()));
+            .removeIf(it -> it.getQuestion() == null || !questionMap.containsKey(it.getQuestion().getId()));
     }
 
     private DataNotFoundException notFoundException(Long id) {

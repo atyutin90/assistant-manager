@@ -84,6 +84,12 @@
                            th:aria-label="#{staff-evaluation.manage-questions}">
                             <i class="fa-solid fa-question"></i>
                         </a>
+                        <a class="btn btn-outline-secondary btn-sm"
+                           th:href="@{/staff-evaluations/{id}/statistics(id=${staffEvaluation.id})}"
+                           th:title="#{staff-evaluation.statistics}"
+                           th:aria-label="#{staff-evaluation.statistics}">
+                            <i class="fa-solid fa-chart-column"></i>
+                        </a>
                     </div>
                 </td>
             </tr>

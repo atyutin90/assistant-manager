@@ -12,11 +12,16 @@ public class EmailMessageServiceImpl implements EmailMessageService {
 
     private final KafkaTemplate<String, EmailMessage> kafkaTemplate;
 
+    @Value("${app.kafka.enabled:false}")
+    private Boolean kafkaEnabled;
+
     @Value("${app.kafka.email-topic:email-topic}")
     private String emailTopic;
 
     @Override
     public void send(EmailMessage message) {
-        kafkaTemplate.send(emailTopic, message.to(), message);
+        if (kafkaEnabled) {
+            kafkaTemplate.send(emailTopic, message.to(), message);
+        }
     }
 }

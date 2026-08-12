@@ -2,6 +2,7 @@ package ru.otus.services.staffevaluation;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
+import ru.otus.entity.ProjectRole;
 import ru.otus.entity.Question;
 import ru.otus.entity.StaffEvaluation;
 import ru.otus.entity.StaffEvaluationQuestion;
@@ -53,10 +54,12 @@ class StaffEvaluationServiceImplTest {
     }
 
     private StaffEvaluation evaluation() {
+        var projectRole = ProjectRole.builder().id(1L).build();
         var user = User.builder()
             .firstName("Иван")
             .lastName("Иванов")
             .middleName("")
+            .projectRole(projectRole)
             .email("employee@example.com")
             .build();
         var evaluation = StaffEvaluation.builder()
@@ -70,7 +73,10 @@ class StaffEvaluationServiceImplTest {
         ));
         evaluation.setStaffEvaluationQuestions(Set.of(
             StaffEvaluationQuestion.builder()
-                .question(Question.builder().id(10L).build())
+                .question(Question.builder()
+                    .id(10L)
+                    .projectRole(projectRole)
+                    .build())
                 .staffEvaluation(evaluation)
                 .build()
         ));

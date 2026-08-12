@@ -34,6 +34,8 @@ public class EmployeeSpecification {
 
             filterByProjectRole(filter, root, cbuilder, predicates);
 
+            filterByStatus(filter, root, cbuilder, predicates);
+
             return cbuilder.and(predicates.toArray(Predicate[]::new));
         };
     }
@@ -69,6 +71,13 @@ public class EmployeeSpecification {
             Join<StaffEvaluationUser, User> userJoin = root.join("user");
             Join<User, ProjectRole> projectRoleJoin = userJoin.join("projectRole");
             predicates.add(cbuilder.equal(projectRoleJoin.get("id"), filter.projectRole()));
+        }
+    }
+
+    private static void filterByStatus(StaffEvaluationUserFilter filter, Root<StaffEvaluationUser> root,
+                                       CriteriaBuilder cbuilder, List<Predicate> predicates) {
+        if (filter.status() != null) {
+            predicates.add(cbuilder.equal(root.get("status"), filter.status()));
         }
     }
 }

@@ -16,6 +16,7 @@ class EmailMessageServiceImplTest {
         var kafkaTemplate = (KafkaTemplate<String, EmailMessage>) mock(KafkaTemplate.class);
         var service = new EmailMessageServiceImpl(kafkaTemplate);
         ReflectionTestUtils.setField(service, "emailTopic", "email-topic");
+        ReflectionTestUtils.setField(service, "kafkaEnabled", true);
         var message = new EmailMessage("employee@example.com", "Subject", "Text");
 
         service.send(message);

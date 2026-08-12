@@ -31,6 +31,8 @@ public record EmployeeDto(
     Long currentLevel,
 
     //Должность по ТК
-    String laborCodePosition
+    String laborCodePosition,
+
+    String responsible
 ) {
 }

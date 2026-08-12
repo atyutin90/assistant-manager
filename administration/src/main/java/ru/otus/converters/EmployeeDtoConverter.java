@@ -20,6 +20,7 @@ public class EmployeeDtoConverter {
                 .projectRole(user.getProjectRole() != null ? user.getProjectRole().getId() : null)
                 .currentLevel(user.getCurrentLevel() != null ? user.getCurrentLevel().getId() : null)
                 .laborCodePosition(user.getLaborCodePosition())
+                .responsible(user.getResponsible() != null ? user.getResponsible().getDisplayName() : null)
                 .build();
         }
         return result;

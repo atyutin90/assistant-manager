@@ -5,11 +5,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,13 +31,20 @@ import static ru.otus.entity.AssessmentProject.ASSESSMENT_PROJECT_GRAPH;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"owner", "sharedManagers"})
-@ToString(exclude = {"owner", "sharedManagers"})
+@EqualsAndHashCode(exclude = {"owner", "accesses"})
+@ToString(exclude = {"owner", "accesses"})
 @Entity
 @Table(name = "assessment_project")
 @NamedEntityGraph(
     name = ASSESSMENT_PROJECT_GRAPH,
-    attributeNodes = {@NamedAttributeNode("owner"), @NamedAttributeNode("sharedManagers")}
+    attributeNodes = {
+        @NamedAttributeNode("owner"),
+        @NamedAttributeNode(value = "accesses", subgraph = "assessment-project-access-manager")
+    },
+    subgraphs = @NamedSubgraph(
+        name = "assessment-project-access-manager",
+        attributeNodes = @NamedAttributeNode("manager")
+    )
 )
 public class AssessmentProject {
 
@@ -62,11 +69,6 @@ public class AssessmentProject {
     private User owner;
 
     @Builder.Default
-    @ManyToMany(fetch = LAZY)
-    @JoinTable(
-        name = "assessment_project_access",
-        joinColumns = @JoinColumn(name = "project_id"),
-        inverseJoinColumns = @JoinColumn(name = "manager_id")
-    )
-    private Set<User> sharedManagers = new HashSet<>();
+    @OneToMany(mappedBy = "project", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    private Set<AssessmentProjectAccess> accesses = new HashSet<>();
 }

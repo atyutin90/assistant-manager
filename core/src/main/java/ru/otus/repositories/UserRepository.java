@@ -13,6 +13,7 @@ import ru.otus.entity.enums.UserRole;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static ru.otus.entity.User.USER_GRAPH;
 import static ru.otus.entity.User.USER_ALL_GRAPH;
@@ -36,7 +37,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findByUsername(String username);
 
     @EntityGraph(value = USER_ALL_GRAPH)
-    List<User> findByRolesContainsAndIdNot(UserRole role, Long excludedUserId);
+    List<User> findByRolesContainsAndIdNotIn(UserRole role, Set<Long> excludedUserIds);
 
     @EntityGraph(value = USER_ALL_GRAPH)
     Optional<User> findByRolesContainsAndUsername(UserRole role, String username);

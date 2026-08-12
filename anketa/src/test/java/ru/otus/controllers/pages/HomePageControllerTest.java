@@ -6,19 +6,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 import ru.otus.dto.ProfileDto;
 import ru.otus.dto.UserDto;
+import ru.otus.dto.VerificationItemDto;
 import ru.otus.services.JwtService;
 import ru.otus.services.ProfileService;
 import ru.otus.services.StaffEvaluationUserService;
 import ru.otus.services.UserService;
+import ru.otus.services.VerificationService;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import static java.time.LocalDate.of;
 
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,6 +36,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static ru.otus.entity.enums.StaffEvaluationStatus.ACTIVE;
+import static ru.otus.entity.enums.StaffEvaluationUserStatus.VERIFICATION;
 import static ru.otus.controllers.pages.AbstractPageController.PASSWORD_CHANGE;
 import static ru.otus.controllers.pages.AbstractPageController.SHOW_PASSWORD_MODAL;
 import static ru.otus.controllers.pages.AbstractPageController.STAFF_EVALUATIONS;
@@ -58,6 +65,9 @@ class HomePageControllerTest {
     private StaffEvaluationUserService staffEvaluationUserService;
 
     @MockitoBean
+    private VerificationService verificationService;
+
+    @MockitoBean
     private UserService userService;
 
     @MockitoBean
@@ -69,18 +79,33 @@ class HomePageControllerTest {
         when(profileService.getProfile(7L))
             .thenReturn(ProfileDto.builder().id(7L).username(EMPLOYEE).build());
         when(staffEvaluationUserService.findActive(7L)).thenReturn(List.of());
+        when(verificationService.findPending(org.mockito.ArgumentMatchers.eq(7L),
+            org.mockito.ArgumentMatchers.any())).thenReturn(new PageImpl<>(List.of()));
     }
 
     @Test
-    @DisplayName("главная страница должна содержать профиль и активные оценки")
+    @DisplayName("главная страница должна содержать профиль, активные оценки и верификации")
     void shouldRenderHomePage() throws Exception {
         var profile = ProfileDto.builder().id(7L).username(EMPLOYEE).build();
+        var verification = VerificationItemDto.builder()
+            .staffEvaluationUserId(12L)
+            .name("Оценка 2026")
+            .dateFrom(of(2026, 1, 1))
+            .dateTo(of(2026, 1, 31))
+            .employeeName("Иван Иванов")
+            .employeeUsername("ivanov")
+            .staffEvaluationStatus(ACTIVE)
+            .staffEvaluationUserStatus(VERIFICATION)
+            .build();
         when(profileService.getProfile(7L)).thenReturn(profile);
+        when(verificationService.findPending(org.mockito.ArgumentMatchers.eq(7L),
+            org.mockito.ArgumentMatchers.any())).thenReturn(new PageImpl<>(List.of(verification)));
         mvc.perform(get("/").with(user(EMPLOYEE)))
             .andExpect(status().isOk())
             .andExpect(view().name("page/home/edit"))
             .andExpect(model().attribute("profile", profile))
             .andExpect(model().attribute(STAFF_EVALUATIONS, List.of()))
+            .andExpect(model().attribute("verifications", List.of(verification)))
             .andExpect(model().attributeExists(PASSWORD_CHANGE))
             .andExpect(model().attribute(SHOW_PASSWORD_MODAL, false));
     }

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/manager-header :: manager-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="mx-auto">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-3">
+            <div>
+                <h1 class="h3 mb-1" th:text="${employeeDetails.fullName}">Employee</h1>
+                <div class="small text-muted mb-1">
+                    <i class="fas fa-user me-1"></i>
+                    <span th:text="${employeeDetails.username}">username</span>
+                    <span th:if="${!#strings.isEmpty(employeeDetails.email)}">
+                        <span class="mx-1">·</span>
+                        <i class="fas fa-envelope me-1"></i>
+                        <span th:text="${employeeDetails.email}">email</span>
+                    </span>
+                </div>
+                <div class="small text-muted mb-1" th:if="${!#strings.isEmpty(employeeDetails.projectRole)}">
+                    <span th:text="#{employee.project-role}">Project role</span>:
+                    <span class="fw-semibold" th:text="${employeeDetails.projectRole}">Role</span>
+                </div>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/employees(staffEvaluation=${employeeDetails.staffEvaluationId})}"
+               th:title="#{list}"
+               th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+        </div>
+
+        <form class="card border-0 shadow-sm mb-3" method="get"
+              th:action="@{/employees/{id}/detail(id=${employeeDetails.employeeId})}">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label" for="project" th:text="#{manager.project-filter}">Project</label>
+                        <select id="project" name="project" class="form-select">
+                            <option value="" th:text="#{manager.select-project}">Select project</option>
+                            <option th:each="item : ${projects}"
+                                    th:value="${item.id}"
+                                    th:selected="${item.id == employeeDetails.projectId}"
+                                    th:text="${item.name}">Project</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="staffEvaluation"
+                               th:text="#{manager.employee-evaluation-filter}">Evaluation</label>
+                        <select id="staffEvaluation" name="staffEvaluation" class="form-select" required>
+                            <option th:each="item : ${staffEvaluations}"
+                                    th:value="${item.id}"
+                                    th:selected="${item.id == employeeDetails.staffEvaluationId}"
+                                    th:text="${item.name}">
+                                Evaluation
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-2">
+                    <button class="btn btn-outline-primary btn-sm"
+                            type="submit"
+                            th:title="#{manager.show-results}"
+                            th:aria-label="#{manager.show-results}">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div th:if="${employeeDetails.projectId == null}"
+             class="alert alert-info"
+             th:text="#{manager.select-project-for-results}">
+            Select a project to display results
+        </div>
+
+        <section class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 text-center">
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded py-2 px-1 h-100">
+                            <div class="text-muted small" th:text="#{staff-evaluation-results.answers}">Answers</div>
+                            <div class="h5 mb-0" th:text="${employeeDetails.answerCount}">0</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border border-success-subtle bg-success-subtle rounded py-2 px-1 h-100">
+                            <div class="text-success small" th:text="#{staff-evaluation-results.matches}">Matches</div>
+                            <div class="h5 mb-0 text-success" th:text="${employeeDetails.matchedAnswerCount}">0</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border border-danger-subtle bg-danger-subtle rounded py-2 px-1 h-100">
+                            <div class="text-danger small" th:text="#{staff-evaluation-results.mismatches}">Mismatches</div>
+                            <div class="h5 mb-0 text-danger" th:text="${employeeDetails.mismatchedAnswerCount}">0</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border border-warning-subtle bg-warning-subtle rounded py-2 px-1 h-100">
+                            <div class="text-warning-emphasis small" th:text="#{staff-evaluation-results.pending}">Pending</div>
+                            <div class="h5 mb-0 text-warning-emphasis" th:text="${employeeDetails.pendingAnswerCount}">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="small mt-3">
+                    <span class="text-muted" th:text="#{staff-evaluation-results.verified-by}">Verified by:</span>
+                    <span class="fw-semibold"
+                          th:text="${#strings.isEmpty(employeeDetails.verifiedBy) ? '—' : employeeDetails.verifiedBy}">
+                        Verifier
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <div class="accordion" id="employeeSkills" th:unless="${employeeDetails.skills.isEmpty()}">
+            <div class="accordion-item" th:each="skillGroup, skillIteration : ${employeeDetails.skills}">
+                <h2 class="accordion-header" th:id="|skill-heading-${skillIteration.index}|">
+                    <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            th:data-bs-target="|#skill-${skillIteration.index}|"
+                            aria-expanded="false"
+                            th:aria-controls="|skill-${skillIteration.index}|">
+                        <span class="d-flex flex-column flex-md-row justify-content-between align-items-md-center flex-grow-1 gap-2 me-3">
+                            <span>
+                                <span class="fw-semibold"
+                                      th:text="${#strings.isEmpty(skillGroup.skill)
+                                          ? #messages.msg('manager.skill-not-specified') : skillGroup.skill}">
+                                    Skill
+                                </span>
+                                <span class="badge text-bg-secondary ms-2"
+                                      th:text="${skillGroup.answerCount}">0</span>
+                            </span>
+                            <span class="text-md-end">
+                                <span class="small text-muted me-1"
+                                      th:text="#{manager.calculated-career-level}">Calculated level:</span>
+                                <span class="badge text-bg-secondary"
+                                      th:text="${#strings.isEmpty(skillGroup.calculatedCareerLevel)
+                                          ? '—' : skillGroup.calculatedCareerLevel}">Junior</span>
+                            </span>
+                        </span>
+                    </button>
+                </h2>
+                <div class="accordion-collapse collapse"
+                     th:id="|skill-${skillIteration.index}|"
+                     th:aria-labelledby="|skill-heading-${skillIteration.index}|"
+                    data-bs-parent="#employeeSkills">
+                    <div class="accordion-body bg-light">
+                        <div class="accordion"
+                             th:id="|career-levels-${skillIteration.index}|">
+                            <div class="accordion-item"
+                                 th:each="levelGroup, levelIteration : ${skillGroup.careerLevels}">
+                                <h3 class="accordion-header"
+                                    th:id="|career-level-heading-${skillIteration.index}-${levelIteration.index}|">
+                                    <button class="accordion-button collapsed"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            th:data-bs-target="|#career-level-${skillIteration.index}-${levelIteration.index}|"
+                                            aria-expanded="false"
+                                            th:aria-controls="|career-level-${skillIteration.index}-${levelIteration.index}|">
+                                        <span class="fw-semibold"
+                                              th:text="${#strings.isEmpty(levelGroup.careerLevel)
+                                                  ? #messages.msg('manager.career-level-not-specified')
+                                                  : levelGroup.careerLevel}">Career level</span>
+                                        <span class="badge text-bg-success ms-2"
+                                              th:text="${levelGroup.successfulAnswerCount()}">Successful: 0</span>
+                                        <span class="badge text-bg-danger ms-2"
+                                              th:text="${levelGroup.unsuccessfulAnswerCount()}">Unsuccessful: 0</span>
+                                    </button>
+                                </h3>
+                                <div class="accordion-collapse collapse"
+                                     th:id="|career-level-${skillIteration.index}-${levelIteration.index}|"
+                                     th:aria-labelledby="|career-level-heading-${skillIteration.index}-${levelIteration.index}|"
+                                    th:data-bs-parent="|#career-levels-${skillIteration.index}|">
+                                    <div class="accordion-body">
+                                        <div th:if="${levelGroup.answers.isEmpty()}"
+                                             class="text-muted small"
+                                             th:text="#{manager.employee-results-empty}">
+                                            No answers
+                                        </div>
+                                        <div class="d-flex flex-column gap-2">
+                                    <article class="card border-0 shadow-sm"
+                                             th:each="answer, answerIteration : ${levelGroup.answers}">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between gap-2 mb-1">
+                                                <div class="small">
+                                                    <span class="text-primary fw-semibold"
+                                                          th:text="${answer.areaKnowledge}">Area</span>
+                                                    <span class="text-muted" th:text="${answer.section}">Section</span>
+                                                </div>
+                                                <span class="badge text-bg-light"
+                                                      th:text="|#${answerIteration.count}|">#1</span>
+                                            </div>
+                                            <h4 class="h6 mb-3" th:text="${answer.question}">Question</h4>
+
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <span class="badge"
+                                                      th:classappend="${answer.response.name() == 'YES'
+                                                          ? 'text-bg-success'
+                                                          : (answer.response.name() == 'NO'
+                                                              ? 'text-bg-danger' : 'text-bg-warning')}"
+                                                      th:text="|#{staff-evaluation-results.employee-answer}: ${#messages.msg('AnswerResponse.' + answer.response.name())}|">
+                                                    Employee answer
+                                                </span>
+                                                <span th:if="${answer.verifiedResponse != null}"
+                                                      class="badge"
+                                                      th:classappend="${answer.verifiedResponse.name() == 'YES'
+                                                          ? 'text-bg-success'
+                                                          : (answer.verifiedResponse.name() == 'NO'
+                                                              ? 'text-bg-danger' : 'text-bg-warning')}"
+                                                      th:text="|#{staff-evaluation-results.verification-result}: ${#messages.msg('VerificationResponse.' + answer.verifiedResponse.name())}|">
+                                                    Verification result
+                                                </span>
+                                                <span th:unless="${answer.verifiedResponse != null}"
+                                                      class="badge text-bg-secondary"
+                                                      th:text="#{staff-evaluation-results.not-verified}">
+                                                    Not verified
+                                                </span>
+                                            </div>
+
+                                            <div class="alert alert-light border small py-2 px-3 mt-2 mb-0"
+                                                 th:if="${!#strings.isEmpty(answer.verificationComment)}">
+                                                <div class="fw-semibold mb-1" th:text="#{verification.comment}">
+                                                    Comment
+                                                </div>
+                                                <div class="text-break" th:text="${answer.verificationComment}">
+                                                    Comment
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </article>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

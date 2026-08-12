@@ -12,12 +12,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import ru.otus.annotations.CurrentUserParam;
 import ru.otus.dto.CurrentUser;
 import ru.otus.dto.VerificationDetailsDto;
 import ru.otus.dto.VerificationFormDto;
 import ru.otus.services.VerificationService;
+
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Controller
 @RequiredArgsConstructor
@@ -44,61 +45,74 @@ public class VerificationPageController implements AbstractPageController {
     }
 
     @GetMapping("/verifications/{staffEvaluationUserId}")
-    public String start(
-        @PathVariable Long staffEvaluationUserId,
-        @CurrentUserParam CurrentUser currentUser
-    ) {
-        var questionUuid = verificationService.findStartQuestion(staffEvaluationUserId, currentUser.id());
-        return verificationRedirect(staffEvaluationUserId, questionUuid);
-    }
-
-    @GetMapping("/verifications/{staffEvaluationUserId}/{uuid}")
     public String details(
         @PathVariable Long staffEvaluationUserId,
-        @PathVariable String uuid,
         @CurrentUserParam CurrentUser currentUser,
         Model model
     ) {
-        var verification = verificationService.findDetails(staffEvaluationUserId, currentUser.id(), uuid);
-        model.addAttribute(VERIFICATION_FORM, formOf(verification));
+        var verification = verificationService.findDetails(staffEvaluationUserId, currentUser.id());
+        model.addAttribute(VERIFICATION_FORM, VerificationFormDto.builder().build());
         enrichDetails(model, verification);
         return "page/verification/question";
+    }
+
+    @GetMapping("/verifications/{staffEvaluationUserId}/{uuid}")
+    public String legacyQuestion(
+        @PathVariable Long staffEvaluationUserId,
+        @PathVariable String uuid
+    ) {
+        return verificationRedirect(staffEvaluationUserId, uuid);
     }
 
     @PostMapping("/verifications/{staffEvaluationUserId}/{uuid}")
     public String save(
         @PathVariable Long staffEvaluationUserId,
         @PathVariable String uuid,
-        @RequestParam String action,
         @Valid @ModelAttribute(VERIFICATION_FORM) VerificationFormDto form,
         BindingResult bindingResult,
         @CurrentUserParam CurrentUser currentUser,
         Model model
     ) {
         if (bindingResult.hasErrors()) {
-            var verification = verificationService.findDetails(staffEvaluationUserId, currentUser.id(), uuid);
+            var verification = verificationService.findDetails(staffEvaluationUserId, currentUser.id());
+            model.addAttribute("editingQuestionUuid", uuid);
+            model.addAttribute("responseError", bindingResult.hasFieldErrors("response"));
+            model.addAttribute("commentError", bindingResult.hasFieldErrors("comment"));
             enrichDetails(model, verification);
             return "page/verification/question";
         }
-        var finish = FINISH.equals(action);
-        verificationService.save(staffEvaluationUserId, currentUser.id(), form, finish);
-        return finish ? "redirect:/verifications" : verificationRedirect(staffEvaluationUserId);
+        verificationService.save(staffEvaluationUserId, currentUser.id(), form);
+        return verificationRedirect(staffEvaluationUserId, uuid);
     }
 
-    private VerificationFormDto formOf(VerificationDetailsDto verification) {
-        return VerificationFormDto.builder()
-            .answerId(verification.currentQuestion().answerId())
-            .response(verification.currentQuestion().verifiedResponse())
-            .comment(verification.currentQuestion().comment())
-            .build();
+    @PostMapping("/verifications/{staffEvaluationUserId}/confirm-all")
+    public String confirmAll(
+        @PathVariable Long staffEvaluationUserId,
+        @CurrentUserParam CurrentUser currentUser
+    ) {
+        verificationService.confirmAll(staffEvaluationUserId, currentUser.id());
+        return verificationRedirect(staffEvaluationUserId);
+    }
+
+    @PostMapping("/verifications/{staffEvaluationUserId}/complete")
+    public String complete(
+        @PathVariable Long staffEvaluationUserId,
+        @CurrentUserParam CurrentUser currentUser
+    ) {
+        verificationService.complete(staffEvaluationUserId, currentUser.id());
+        return "redirect:/verifications";
     }
 
     private String verificationRedirect(Long staffEvaluationUserId) {
-        return "redirect:/verifications/%d".formatted(staffEvaluationUserId);
+        return verificationRedirect(staffEvaluationUserId, null);
     }
 
-    private String verificationRedirect(Long staffEvaluationUserId, String questionUuid) {
-        return "redirect:/verifications/%d/%s".formatted(staffEvaluationUserId, questionUuid);
+    private String verificationRedirect(Long staffEvaluationUserId, String questionUUID) {
+        if (isNotEmpty(questionUUID)) {
+            return "redirect:/verifications/%d#question-%s".formatted(staffEvaluationUserId,  questionUUID);
+        } else {
+            return "redirect:/verifications/%d".formatted(staffEvaluationUserId);
+        }
     }
 
     private void enrichDetails(Model model, VerificationDetailsDto verification) {

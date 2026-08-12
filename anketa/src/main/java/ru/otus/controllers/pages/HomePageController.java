@@ -14,6 +14,9 @@ import ru.otus.dto.CurrentUser;
 import ru.otus.dto.UserPasswordDto;
 import ru.otus.services.ProfileService;
 import ru.otus.services.StaffEvaluationUserService;
+import ru.otus.services.VerificationService;
+
+import static org.springframework.data.domain.Pageable.unpaged;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,9 +24,13 @@ public class HomePageController implements AbstractPageController {
 
     private final static String PROFILE = "profile";
 
+    private final static String VERIFICATIONS = "verifications";
+
     private final ProfileService profileService;
 
     private final StaffEvaluationUserService staffEvaluationUserService;
+
+    private final VerificationService verificationService;
 
     @GetMapping("/")
     public String home(@CurrentUserParam CurrentUser currentUser,
@@ -55,8 +62,10 @@ public class HomePageController implements AbstractPageController {
         var userId = currentUser.id();
         var profile = profileService.getProfile(userId);
         var staffEvaluations = staffEvaluationUserService.findActive(userId);
+        var verifications = verificationService.findPending(userId, unpaged()).getContent();
         model.addAttribute(PROFILE, profile);
         model.addAttribute(STAFF_EVALUATIONS, staffEvaluations);
+        model.addAttribute(VERIFICATIONS, verifications);
         model.addAttribute(PASSWORD_CHANGE, passwordChange);
         model.addAttribute(SHOW_PASSWORD_MODAL, showPasswordModal);
         return "page/home/edit";

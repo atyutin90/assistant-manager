@@ -11,10 +11,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.otus.dto.ProjectDto;
+import ru.otus.dto.ProjectManagerDto;
 import ru.otus.dto.UserDto;
 import ru.otus.dto.filter.ProjectFilter;
 import ru.otus.services.JwtService;
-import ru.otus.services.ProjectService;
+import ru.otus.services.project.ProjectService;
 import ru.otus.services.UserService;
 
 import java.util.List;
@@ -103,6 +104,24 @@ class ProjectPageControllerTest {
     }
 
     @Test
+    @DisplayName("редактор проекта должен иметь возможность управлять доступом, но не удалять проект")
+    void shouldAllowEditorToManageAccessWithoutDelete() throws Exception {
+        var project = ProjectDto.builder()
+            .id(3L)
+            .name("CRM")
+            .active(true)
+            .owner(ProjectManagerDto.builder().id(8L).username("owner").build())
+            .build();
+        when(projectService.findById(3L, 5L)).thenReturn(project);
+        when(projectService.canEdit(3L, 5L)).thenReturn(true);
+
+        mvc.perform(get("/projects/3").with(user("manager")))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("canManageAccess", true))
+            .andExpect(model().attribute("canDelete", false));
+    }
+
+    @Test
     @DisplayName("валидный проект должен сохраняться")
     void shouldSaveProject() throws Exception {
         when(projectService.save(any(ProjectDto.class), org.mockito.ArgumentMatchers.eq(5L)))
@@ -162,8 +181,7 @@ class ProjectPageControllerTest {
             .name("CRM")
             .description("CRM project")
             .active(true)
-            .ownerId(5L)
-            .ownerUsername("manager")
+            .owner(ProjectManagerDto.builder().id(5L).username("manager").build())
             .build();
     }
 }

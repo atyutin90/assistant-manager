@@ -7,6 +7,7 @@ public record ManagerAccessDto(
     Long id,
     String name,
     String username,
-    boolean selected
+    boolean readAllowed,
+    boolean editAllowed
 ) {
 }

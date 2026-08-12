@@ -29,7 +29,7 @@
 
     <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{manager.project-access-saved})}"></div>
 
-    <p class="text-muted" th:text="#{manager.project-access-description}">Select managers who can work with this project.</p>
+    <div class="mt-2 alert alert-info" th:utext="#{manager.project-access-reading-description} + '<br/>' + #{manager.project-access-writing-description}"></div>
 
     <form method="post" th:action="@{/projects/{id}/access(id=${project.id})}">
         <div class="d-flex justify-content-end mb-2">
@@ -45,8 +45,12 @@
                 <thead>
                 <tr>
                     <th scope="col" class="text-center"
-                        th:text="#{manager.project-access-allowed}">
-                        Access
+                        th:text="#{manager.project-read-access}">
+                        Read access
+                    </th>
+                    <th scope="col" class="text-center"
+                        th:text="#{manager.project-edit-access}">
+                        Edit access
                     </th>
                     <th scope="col" th:text="#{manager.manager-name}">
                         Name
@@ -58,7 +62,7 @@
                 </thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(managers)}">
-                    <td colspan="3"
+                    <td colspan="4"
                         class="text-center text-muted py-4"
                         th:text="#{manager.managers-empty}">
                         No managers
@@ -68,10 +72,18 @@
                     <td class="text-center">
                         <input class="form-check-input"
                                type="checkbox"
-                               name="managerIds"
+                               name="readManagerIds"
                                th:value="${manager.id}"
-                               th:checked="${manager.selected}"
-                               th:aria-label="#{manager.project-access-allowed}">
+                               th:checked="${manager.readAllowed}"
+                               th:aria-label="#{manager.project-read-access}">
+                    </td>
+                    <td class="text-center">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="editManagerIds"
+                               th:value="${manager.id}"
+                               th:checked="${manager.editAllowed}"
+                               th:aria-label="#{manager.project-edit-access}">
                     </td>
                     <td th:text="${manager.name}">Manager</td>
                     <td th:text="${manager.username}">username</td>

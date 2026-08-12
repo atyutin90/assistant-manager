@@ -8,133 +8,68 @@
 
 <main class="container flex-grow-1 py-4">
     <div class="mx-auto" style="max-width: 960px;">
-        <div th:replace="~{fragments/success-operation-message :: infoMessage(${verificationSaved}, #{verification.saved})}"></div>
-
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
             <div>
                 <div class="text-muted small" th:text="${verification.name}">Evaluation</div>
-                <h1 class="h4 mb-0" th:text="#{verification.details-title}">Staff evaluation verification</h1>
-                <div class="small mt-1">
+                <h1 class="h3 mb-1" th:text="#{verification.details-title}">Staff evaluation verification</h1>
+                <div class="small mb-1">
                     <span class="fw-semibold" th:text="${verification.employeeName}">Employee</span>
                     <span class="text-muted" th:text="|(${verification.employeeUsername})|">(username)</span>
                 </div>
-            </div>
-            <div class="d-flex align-items-center gap-2">
                 <div class="text-muted">
-                    <span th:text="#{verification.progress}">Verified:</span>
-                    <strong th:text="|${verification.verifiedQuestionsCount}/${verification.questions.size()}|"/>
+                    <i class="far fa-calendar me-1"></i>
+                    <span th:text="${#temporals.format(verification.dateFrom, 'dd.MM.yyyy')}">01.01.2026</span>
+                    <span>—</span>
+                    <span th:text="${#temporals.format(verification.dateTo, 'dd.MM.yyyy')}">31.01.2026</span>
                 </div>
-                <div class="btn-group" role="group">
-                    <button th:if="${verification.canFinish}"
-                            class="btn btn-outline-success btn-sm"
+            </div>
+            <div class="d-flex flex-wrap align-items-center">
+                <form method="post"
+                      th:action="@{/verifications/{id}/confirm-all(id=${verification.staffAssignmentUserId})}">
+                    <button class="btn btn-outline-success btn-sm"
                             type="submit"
-                            form="verification-form"
-                            name="action"
-                            value="finish"
-                            th:title="#{verification.finish}"
-                            th:aria-label="#{verification.finish}">
-                        <i class="fas fa-flag-checkered"></i>
+                            th:title="#{verification.confirm-all}"
+                            th:aria-label="#{verification.confirm-all}">
+                        <i class="fas fa-check-double"></i>
                     </button>
-                    <a class="btn btn-outline-secondary btn-sm"
-                       th:href="@{/verifications}"
-                       th:title="#{list}"
-                       th:aria-label="#{list}">
-                        <i class="fas fa-list"></i>
-                    </a>
-                </div>
+                </form>
+                <button th:if="${verification.canFinish}"
+                        type="button"
+                        class="btn btn-outline-success btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#finish-verification-modal"
+                        th:title="#{verification.finish}"
+                        th:aria-label="#{verification.finish}">
+                    <i class="fas fa-flag-checkered"></i>
+                </button>
+                <a class="btn btn-outline-secondary btn-sm"
+                   th:href="@{/verifications}"
+                   th:title="#{list}"
+                   th:aria-label="#{list}">
+                    <i class="fas fa-list"></i>
+                </a>
             </div>
         </div>
 
-        <article class="card border-0 shadow-sm mb-3" >
-            <div class="card-body p-4 p-md-5">
-                <div class="text-primary fw-semibold mb-2"
-                     th:text="${verification.currentQuestion.areaKnowledge}">
-                    Area of knowledge
+        <section class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 text-center">
+                    <div class="col-6">
+                        <div class="border rounded py-2 px-1 h-100">
+                            <div class="text-muted small" th:text="#{staff-evaluation-results.answers}">Answers</div>
+                            <div class="h5 mb-0" th:text="${verification.questions.size()}">0</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border border-warning-subtle bg-warning-subtle rounded py-2 px-1 h-100">
+                            <div class="text-warning-emphasis small" th:text="#{verification.progress}">Verified</div>
+                            <div class="h5 mb-0 text-warning-emphasis"
+                                 th:text="|${verification.verifiedQuestionsCount}/${verification.questions.size()}|">0/0</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-muted mb-3" th:text="${verification.currentQuestion.section}">Section</div>
-                <h2 class="h4 mb-4" th:text="${verification.currentQuestion.question}">Question</h2>
-
-                <form id="verification-form"
-                      method="post"
-                      th:action="@{/verifications/{id}/{uuid}(id=${verification.staffAssignmentUserId}, uuid=${verification.currentQuestion.uuid})}"
-                      th:object="${verificationForm}">
-                    <input type="hidden" th:field="*{answerId}">
-
-                    <div class="alert mb-4"
-                         th:classappend="${verification.currentQuestion.employeeResponse.name() == 'YES'
-                             ? 'alert-success'
-                             : (verification.currentQuestion.employeeResponse.name() == 'NO'
-                                 ? 'alert-danger'
-                                 : 'alert-warning')}">
-                        <span th:text="#{verification.employee-answer}">Employee answer:</span>
-                        <strong th:text="${#messages.msg('AnswerResponse.' + verification.currentQuestion.employeeResponse.name())}">
-                            Yes
-                        </strong>
-                    </div>
-
-                    <div class="row g-2 mb-4">
-                        <div class="col-md-6">
-                            <input class="btn-check"
-                                   type="radio"
-                                   id="verificationAnswerYes"
-                                   th:field="*{response}"
-                                   value="YES">
-                            <label class="btn btn-outline-success w-100 py-3"
-                                   for="verificationAnswerYes">
-                                <i class="fas fa-check me-2"></i>
-                                <span th:text="#{survey.answer.verification-agreement}">Yes</span>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <input class="btn-check"
-                                   type="radio"
-                                   id="verificationAnswerNo"
-                                   th:field="*{response}"
-                                   value="NO">
-                            <label class="btn btn-outline-danger w-100 py-3"
-                                   for="verificationAnswerNo">
-                                <i class="fas fa-xmark me-2"></i>
-                                <span th:text="#{survey.answer.verification-disagreement}">No</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label" for="verification-comment" th:text="#{verification.comment}">
-                            Comment
-                        </label>
-                        <textarea class="form-control"
-                                  rows="3"
-                                  maxlength="4000"
-                                  id="verification-comment"
-                                  th:field="*{comment}"
-                                  th:classappend="${#fields.hasErrors('comment')} ? 'is-invalid'"
-                                  th:placeholder="#{verification.comment-placeholder}"></textarea>
-                        <div class="invalid-feedback"
-                             th:if="${#fields.hasErrors('comment')}"
-                             th:text="#{verification.comment-too-long}">
-                            Comment is too long
-                        </div>
-                    </div>
-
-                    <div class="text-danger mb-3" th:if="${#fields.hasErrors('response')}"
-                         th:text="#{survey.answer.required}">
-                        Select an answer
-                    </div>
-
-                    <div class="d-flex flex-column flex-sm-row gap-2">
-                        <button class="btn btn-primary flex-grow-1"
-                                type="submit"
-                                name="action"
-                                value="next"
-                                th:title="#{verification.save-next}">
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-
-                </form>
             </div>
-        </article>
+        </section>
 
         <details class="card border-0 shadow-sm mb-3">
             <summary class="card-body py-3 fw-semibold" th:text="#{verification.feedback}">
@@ -142,35 +77,96 @@
             </summary>
             <div class="card-body border-top pt-3">
                 <p class="mb-0 text-break"
-                   th:text="${#strings.isEmpty(verification.feedback) ? '—' : verification.feedback}">
-                    Feedback
-                </p>
+                   th:text="${#strings.isEmpty(verification.feedback) ? '—' : verification.feedback}">Feedback</p>
             </div>
         </details>
 
-        <nav class="d-flex flex-wrap justify-content-center gap-2 mt-4"
-             th:aria-label="#{verification.navigation}">
-            <a th:each="question : ${verification.questions}"
-               th:href="@{/verifications/{id}/{uuid}(
-                   id=${verification.staffAssignmentUserId},
-                   uuid=${question.uuid}
-               )}"
-               class="rounded-circle d-inline-flex align-items-center justify-content-center text-decoration-none"
-               th:classappend="${question.uuid == verification.currentQuestion.uuid
-                   ? 'bg-primary text-white'
-                   : (question.verifiedResponse != null
-                       ? (question.verifiedResponse.name() == 'YES'
-                           ? 'bg-success-subtle text-success'
-                           : (question.verifiedResponse.name() == 'NO'
-                               ? 'bg-danger-subtle text-danger'
-                               : 'bg-warning-subtle text-warning-emphasis'))
-                       : 'bg-secondary-subtle text-secondary')}"
-               style="width: 10px; height: 10px; cursor: pointer; line-height: 10px; font-size: 0.5rem; border-radius: 50%;"
-               th:title="${question.question}">
-            </a>
-        </nav>
+        <div class="d-flex flex-column gap-2">
+            <article class="card border-0 shadow-sm"
+                     th:each="question, iteration : ${verification.questions}"
+                     th:id="|question-${question.uuid}|">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between gap-2 mb-1">
+                        <div class="small">
+                            <span class="text-primary fw-semibold" th:text="${question.areaKnowledge}">Area</span>
+                            <span class="text-muted" th:text="${question.section}">Section</span>
+                        </div>
+                        <span class="badge text-bg-light" th:text="|#${iteration.count}|">#1</span>
+                    </div>
+                    <h2 class="h6 mb-2" th:text="${question.question}">Question</h2>
+
+                    <div class="border rounded py-2 px-3 mb-3 d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small" th:text="#{verification.employee-answer}">Employee answer</div>
+                        <span class="badge"
+                              th:classappend="${question.employeeResponse.name() == 'YES'
+                                  ? 'text-bg-success'
+                                  : (question.employeeResponse.name() == 'NO' ? 'text-bg-danger' : 'text-bg-warning')}"
+                              th:text="${#messages.msg('AnswerResponse.' + question.employeeResponse.name())}">Yes</span>
+                    </div>
+
+                    <form method="post"
+                          th:action="@{/verifications/{id}/{uuid}(id=${verification.staffAssignmentUserId}, uuid=${question.uuid})}
+                              + |#question-${question.uuid}|">
+                        <input type="hidden" name="answerId" th:value="${question.answerId}">
+
+                        <div class="mb-3">
+                            <label class="form-label small" th:for="|verification-${question.uuid}-comment|"
+                                   th:text="#{verification.comment}">Comment</label>
+                            <textarea class="form-control" rows="2" maxlength="4000" name="comment"
+                                      th:id="|verification-${question.uuid}-comment|"
+                                      th:classappend="${editingQuestionUuid == question.uuid and commentError} ? 'is-invalid'"
+                                      th:placeholder="#{verification.comment-placeholder}"
+                                      th:text="${editingQuestionUuid == question.uuid ? verificationForm.comment : question.comment}"></textarea>
+                            <div class="invalid-feedback"
+                                 th:if="${editingQuestionUuid == question.uuid and commentError}"
+                                 th:text="#{verification.comment-too-long}">Comment is too long</div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-success w-100"
+                                        th:classappend="${editingQuestionUuid == question.uuid
+                                            ? verificationForm.response?.name() == 'YES'
+                                            : question.verifiedResponse?.name() == 'YES'} ? 'active'"
+                                        type="submit"
+                                        name="response"
+                                        value="YES">
+                                    <i class="fas fa-check me-1"></i>
+                                    <span th:text="#{VerificationResponse.YES}">Agreed</span>
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-danger w-100"
+                                        th:classappend="${editingQuestionUuid == question.uuid
+                                            ? verificationForm.response?.name() == 'NO'
+                                            : question.verifiedResponse?.name() == 'NO'} ? 'active'"
+                                        type="submit"
+                                        name="response"
+                                        value="NO">
+                                    <i class="fas fa-xmark me-1"></i>
+                                    <span th:text="#{VerificationResponse.NO}">Disagreed</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-danger small mb-2"
+                             th:if="${editingQuestionUuid == question.uuid and responseError}"
+                             th:text="#{survey.answer.required}">Select an answer</div>
+                    </form>
+                </div>
+            </article>
+        </div>
     </div>
 </main>
+
+<div th:replace="~{fragments/confirmation-modal :: confirmationModal(
+    ${verification.canFinish},
+    'finish-verification-modal',
+    '/verifications/' + ${verification.staffAssignmentUserId} + '/complete',
+    #{verification.finish-title},
+    #{verification.finish-confirm},
+    'btn-outline-success')
+}"></div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

@@ -16,6 +16,7 @@ import ru.otus.dto.filter.StaffEvaluationUserFilter;
 import ru.otus.dto.filter.UserFilter;
 import ru.otus.dto.page.PageDataFilter;
 import ru.otus.entity.enums.UserRole;
+import ru.otus.services.CareerLevelService;
 import ru.otus.services.ProjectRoleService;
 import ru.otus.services.UserService;
 import ru.otus.services.staffevaluation.StaffEvaluationService;
@@ -37,15 +38,11 @@ public class StaffEvaluationEmployeePageController implements StaffEvaluationCon
 
     private static final String EMPLOYEE_PROJECT_ROLE = "employee_project_role";
 
-    private static final String SOURCE = "source";
-
     private static final String ASSIGNED_EMPLOYEES = "assignedEmployees";
 
     private static final String ASSIGNED_PAGE = "assigned";
 
     private static final String EMPLOYEE_PAGE = "employee";
-
-    private static final String MODAL = "modal";
 
     private static final String EMPLOYEE_FILTER = "employeeFilter";
 
@@ -62,6 +59,8 @@ public class StaffEvaluationEmployeePageController implements StaffEvaluationCon
     private final UserService userService;
 
     private final ProjectRoleService projectRoleService;
+
+    private final CareerLevelService careerLevelService;
 
     @GetMapping("/staff-evaluations/{id}/employees")
     public String employees(@PathVariable Long id,
@@ -143,6 +142,7 @@ public class StaffEvaluationEmployeePageController implements StaffEvaluationCon
 
     private void enrichment(Model model) {
         model.addAttribute(PROJECT_ROLES, projectRoleService.findAllValues());
+        model.addAttribute(CAREER_LEVELS, careerLevelService.findAllValues());
     }
 
     private String redirect(Long id) {

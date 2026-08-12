@@ -19,9 +19,8 @@ import ru.otus.dto.CurrentUser;
 import ru.otus.dto.ProjectDto;
 import ru.otus.dto.filter.ProjectFilter;
 import ru.otus.exceptions.NonUniqueValueException;
-import ru.otus.services.ProjectService;
+import ru.otus.services.project.ProjectService;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
 @Controller
@@ -30,7 +29,9 @@ public class ProjectPageController implements AbstractPageController {
 
     private static final String CAN_MANAGE_ACCESS = "canManageAccess";
 
-    private static final String PROJECT_OWNER_USERNAME = "projectOwnerUsername";
+    private static final String CAN_EDIT = "canEdit";
+
+    private static final String CAN_DELETE = "canDelete";
 
     private final ProjectService projectService;
 
@@ -41,7 +42,10 @@ public class ProjectPageController implements AbstractPageController {
         @CurrentUserParam CurrentUser currentUser,
         Model model
     ) {
-        var filter = ProjectFilter.builder().search(search).managerId(currentUser.id()).build();
+        var filter = ProjectFilter.builder()
+            .search(search)
+            .managerId(currentUser.id())
+            .build();
         var projects = projectService.findAll(filter, pageableOf(pageable));
         model.addAttribute(PROJECTS, projects);
         model.addAttribute(FILTER, filter);
@@ -108,10 +112,12 @@ public class ProjectPageController implements AbstractPageController {
 
     private void formAttributes(ProjectDto project, CurrentUser currentUser, Model model) {
         boolean isEdit = project.id() != null;
-        boolean canManageAccess = currentUser.id().equals(project.ownerId());
+        boolean canDelete = currentUser.id().equals(project.owner() != null ? project.owner().id() : null);
+        boolean canEdit = !isEdit || canDelete || projectService.canEdit(project.id(), currentUser.id());
         model.addAttribute(PROJECT, project);
         model.addAttribute(IS_EDIT, isEdit);
-        model.addAttribute(CAN_MANAGE_ACCESS, canManageAccess);
-        model.addAttribute(PROJECT_OWNER_USERNAME, isEdit ? project.ownerUsername() : EMPTY);
+        model.addAttribute(CAN_EDIT, canEdit);
+        model.addAttribute(CAN_MANAGE_ACCESS, isEdit && canEdit);
+        model.addAttribute(CAN_DELETE, canDelete);
     }
 }

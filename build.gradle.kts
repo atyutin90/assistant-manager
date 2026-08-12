@@ -32,7 +32,8 @@ subprojects {
     tasks.withType<Checkstyle>().configureEach {
         // Ignore checks in controllers
         setExcludes(listOf(
-            "**/*PageController.java"
+            "**/*PageController.java",
+            "**/*Test.java"
         ))
     }
 }

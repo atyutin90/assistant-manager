@@ -22,15 +22,15 @@
                 </div>
                 <div class="btn-group" role="group">
                     <button th:if="${survey.canFinish}"
+                            type="button"
                             class="btn btn-outline-success btn-sm"
-                            type="submit"
-                            form="survey-form"
-                            name="action"
-                            value="finish"
+                            data-bs-toggle="modal"
+                            data-bs-target="#finish-survey-modal"
                             th:title="#{survey.finish}"
                             th:aria-label="#{survey.finish}">
                         <i class="fas fa-flag-checkered"></i>
                     </button>
+
                     <a class="btn btn-outline-secondary btn-sm"
                        th:href="@{/staff-evaluations}"
                        th:title="#{survey.return}"
@@ -127,6 +127,15 @@
         </nav>
     </div>
 </main>
+
+<div th:replace="~{fragments/confirmation-modal :: confirmationModal(
+    ${survey.canFinish},
+    'finish-survey-modal',
+    '/survey/' + ${staffEvaluationId} + '/'+ ${projectRole} +'/complete',
+    #{survey.finish-title},
+    #{survey.finish-confirm},
+    'btn-outline-success')
+}"></div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

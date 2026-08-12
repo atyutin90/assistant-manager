@@ -84,9 +84,12 @@ public class SurveyServiceImpl implements SurveyService {
             .findFirst()
             .orElseThrow(this::questionNotFound);
         saveAnswer(context.staffEvaluationUser(), evaluationQuestion, command.response());
-        if (command.finish()) {
-            finishSurvey(context);
-        }
+    }
+
+    @Override
+    public void complete(Long staffEvaluationUserId, Long userId, String projectRole) {
+        var context = surveyContextOf(staffEvaluationUserId, projectRole, userId);
+        finishSurvey(context);
     }
 
     @Override
