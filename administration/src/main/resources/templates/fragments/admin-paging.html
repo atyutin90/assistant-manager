@@ -1,0 +1,37 @@
+<a th:fragment="qualifiedPaging(source, qualifier, pageNum, pageSize, sortField, sortDirection, extraQuery, label, tooltip)"
+   class="page-link"
+   th:href="@{${source} + '?' + ${qualifier} + '_page=' + ${pageNum} + '&' + ${qualifier} + '_size=' + ${pageSize}
+       + ${sortField != null ? '&' + qualifier + '_sort=' + sortField + ',' + sortDirection : ''}
+       + ${extraQuery != null ? extraQuery : ''}}"
+   th:title="${tooltip}" rel="tooltip">
+    [[${label}]]
+</a>
+
+<div th:fragment="qualifiedPagination(source, qualifier, currentPage, totalPages, pageSize, sortField, sortDirection, extraQuery)">
+    <nav aria-label="Pagination" th:if="${totalPages > 1}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a th:replace="~{:: qualifiedPaging(${source}, ${qualifier}, 1, ${pageSize}, ${sortField}, ${sortDirection}, ${extraQuery}, '&lt;&lt;', #{first-page})}"></a>
+            </li>
+            <li class="page-item font-weight-bold" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a th:replace="~{:: qualifiedPaging(${source}, ${qualifier}, ${currentPage - 1}, ${pageSize}, ${sortField}, ${sortDirection}, ${extraQuery}, #{preview}, #{preview-page})}"></a>
+            </li>
+            <li class="page-item disabled" th:if="${currentPage - 2 > 1}">
+                <a class="page-link" href="#">...</a>
+            </li>
+            <li class="page-item" th:classappend="${page == currentPage} ? 'active'"
+                th:each="page : ${#numbers.sequence(currentPage > 2 ? currentPage - 2 : 1, currentPage + 2 < totalPages ? currentPage + 2 : totalPages)}">
+                <a th:replace="~{:: qualifiedPaging(${source}, ${qualifier}, ${page}, ${pageSize}, ${sortField}, ${sortDirection}, ${extraQuery}, ${page}, #{page} + ' ' + ${page})}"></a>
+            </li>
+            <li class="page-item disabled" th:if="${currentPage + 2 < totalPages}">
+                <a class="page-link" href="#">...</a>
+            </li>
+            <li class="page-item font-weight-bold" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a th:replace="~{:: qualifiedPaging(${source}, ${qualifier}, ${currentPage + 1}, ${pageSize}, ${sortField}, ${sortDirection}, ${extraQuery}, #{next}, #{next-page})}"></a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a th:replace="~{:: qualifiedPaging(${source}, ${qualifier}, ${totalPages}, ${pageSize}, ${sortField}, ${sortDirection}, ${extraQuery}, '&gt;&gt;', #{last-page})}"></a>
+            </li>
+        </ul>
+    </nav>
+</div>

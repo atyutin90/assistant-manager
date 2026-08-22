@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/admin-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <h1 class="h3 mb-0" th:text="#{questions.tab}">Questions</h1>
+            <span class="badge text-bg-secondary" th:text="${questions.totalElements}">0</span>
+        </div>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-success btn-sm" th:href="@{/questions/new}" th:title="#{add}">
+                <i class="fas fa-plus"></i>
+            </a>
+            <button class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#upload-question-modal"
+                    th:title="#{upload-file}"
+                    th:aria-label="#{upload-file}">
+                <i class="fas fa-upload"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/questions/download(search=${filter.search}, projectRole=${filter.projectRole}, skill=${filter.skill}, enabled=${filter.enabled})}"
+               th:title="#{download-file}">
+                <i class="fas fa-download"></i>
+            </a>
+        </div>
+    </div>
+
+    <form class="mb-3" method="get" th:action="@{/questions}">
+        <div class="row g-2 mb-2 align-items-center">
+            <div class="col-md-4">
+                <label class="form-label" for="projectRole" th:text="#{project-role}">Project Role</label>
+                <select id="projectRole" name="projectRole" class="form-select" th:aria-label="#{project-role}">
+                    <option value="" th:text="#{filter.all-project-roles}">All project roles</option>
+                    <option th:each="role : ${projectRoles}"
+                            th:value="${role.id}"
+                            th:selected="${role.id == filter.projectRole}"
+                            th:text="${role.value}">Role</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="skill" th:text="#{question.skill}">Skill</label>
+                <select id="skill" name="skill" class="form-select" th:aria-label="#{question.skill}">
+                    <option value="" th:text="#{filter.all-skills}">All skills</option>
+                    <option th:each="skill : ${skills}"
+                            th:value="${skill.id}"
+                            th:selected="${skill.id == filter.skill}"
+                            th:text="${skill.value}">Skill</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="enabled" th:text="#{question.enabled}">Enabled</label>
+                <select id="enabled" name="enabled" class="form-select" th:aria-label="#{question.enabled}">
+                    <option value="" th:selected="${filter.enabled == null}" th:text="#{filter.all}">All</option>
+                    <option value="true" th:selected="${filter.enabled == true}" th:text="#{filter.enabled.yes}">Yes</option>
+                    <option value="false" th:selected="${filter.enabled == false}" th:text="#{filter.enabled.no}">No</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <input name="search"
+                   type="search"
+                   class="form-control"
+                   th:value="${filter.search}"
+                   th:placeholder="#{filter.search}"
+                   th:aria-label="#{filter.search}">
+        </div>
+        <div class="d-flex justify-content-end mt-2">
+            <button class="btn btn-outline-primary btn-sm" type="submit" th:title="#{filter.search}" th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/questions}"
+               th:title="#{reset-search}"
+               th:aria-label="#{reset-search}">
+                <i class="fa-solid fa-broom"></i>
+            </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+            <tr>
+                <th th:replace="~{fragments/sorting :: sorting('/questions', 'id', #{question.id})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/questions', 'enabled', #{question.enabled})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/questions', 'uuid', #{question.uuid})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/questions', 'projectRole', #{project-role})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/questions', 'skill', #{question.skill})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/questions', 'areaKnowledge', #{question.area-knowledge})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/questions', 'section', #{question.section})}"></th>
+                <th scope="col" th:text="#{actions}">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${questions.isEmpty()}">
+                <td colspan="8" class="text-center text-muted py-4" th:text="#{questions.empty}">No data</td>
+            </tr>
+            <tr th:each="question : ${questions.content}">
+                <td th:text="${question.id}">1</td>
+                <td>
+                    <i th:class="${question.enabled ? 'fas fa-check text-success' : 'fas fa-xmark text-secondary'}"></i>
+                </td>
+                <td th:text="${question.uuid}">uuid</td>
+                <td
+                        th:each="projectRole : ${projectRoles}"
+                        th:if="${projectRole.id == question.projectRole}"
+                        th:text="${projectRole.value}">Project role</td>
+                <td
+                        th:each="skill : ${skills}"
+                        th:if="${skill.id == question.skill}"
+                        th:text="${skill.value}">Skill</td>
+                <td th:text="${question.areaKnowledge}">Area</td>
+                <td th:text="${question.section}">Section</td>
+                <td>
+                    <div class="btn-group flex-nowrap" role="group">
+                        <a class="btn btn-outline-primary btn-sm"
+                           th:href="@{/questions/{id}(id=${question.id})}"
+                           th:title="#{edit}"
+                           th:aria-label="#{edit}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:replace="~{fragments/paging :: paggination('/questions')}"></div>
+</main>
+
+<div class="modal fade" id="upload-question-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" method="post" enctype="multipart/form-data" th:action="@{/questions/upload}">
+            <div class="modal-header">
+                <h5 class="modal-title" th:text="#{upload-questions}">Upload questions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" th:aria-label="#{cancel}"></button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control"
+                       type="file"
+                       name="file"
+                       accept=".csv,text/csv"
+                       th:aria-label="#{upload-file}">
+            </div>
+            <div class="modal-footer d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:title="#{cancel}" th:aria-label="#{cancel}">
+                    <i class="fas fa-xmark"></i>
+                </button>
+                <button type="submit" class="btn btn-outline-primary btn-sm" th:title="#{upload-file}" th:aria-label="#{upload-file}">
+                    <i class="fas fa-upload"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

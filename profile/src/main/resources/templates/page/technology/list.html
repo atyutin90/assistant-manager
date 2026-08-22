@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/profile-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/profile-header :: profile-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <h1 class="h3 mb-0" th:text="#{profile.technologies}">Technologies</h1>
+            <span class="badge text-bg-secondary" th:text="${userTechnologies.totalElements}">0</span>
+        </div>
+        <div class="btn-group" role="group">
+            <button class="btn btn-outline-success btn-sm"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addTechnologiesModal"
+                    th:title="#{add}"
+                    th:aria-label="#{add}">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${technologySaved}, #{profile.technology-saved})}"></div>
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${technologyLevelSaved}, #{profile.technology-level-saved})}"></div>
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${technologyDeleted}, #{profile.technology-deleted})}"></div>
+
+    <form class="mb-3" method="get" th:action="@{/technologies}">
+        <div>
+            <input name="search"
+                   type="search"
+                   class="form-control"
+                   th:value="${param.search}"
+                   th:placeholder="#{filter.search}"
+                   th:aria-label="#{filter.search}">
+        </div>
+        <div class="d-flex justify-content-end mt-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    type="submit"
+                    th:title="#{filter.search}"
+                    th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        th:title="#{profile.technology-level-legend}"
+                        th:aria-label="#{profile.technology-level-legend}">
+                    <i class="fas fa-circle-info"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-2 text-nowrap">
+                    <h2 class="dropdown-header p-0 mb-2" th:text="#{profile.technology-level-legend}">Proficiency levels guide</h2>
+                    <div th:each="level : ${technologyLevels}" class="dropdown-item-text px-0 mb-2">
+                        <div class="fw-semibold" th:text="${level.value}">Level</div>
+                        <div class="small" th:text="${#messages.msg('TechnologyLevel.Description.' + level.code)}">Description</div>
+                    </div>
+                </div>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/technologies}"
+               th:title="#{reset-search}"
+               th:aria-label="#{reset-search}">
+                <i class="fas fa-broom"></i>
+            </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+            <tr>
+                <th scope="col" class="w-50" th:text="#{profile.technology}">Technology</th>
+                <th scope="col" th:text="#{profile.technology-level}">Level</th>
+                <th scope="col" th:text="#{actions}">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${userTechnologies.isEmpty()}">
+                <td colspan="3" class="text-center text-muted py-4" th:text="#{profile.technologies-empty}">No data</td>
+            </tr>
+            <tr th:each="technology : ${userTechnologies.content}">
+                <td th:text="${technology.technologyName}">Java</td>
+                <td>
+                    <select class="form-select form-select-sm w-75"
+                            name="level"
+                            th:form="|change-level-${technology.id}|"
+                            th:aria-label="#{profile.technology-level}">
+                        <option th:each="level : ${technologyLevels}"
+                                th:value="${level.code}"
+                                th:selected="${level.code == technology.level.name()}"
+                                th:text="${level.value}">Level</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="d-inline-flex">
+                        <form method="post"
+                              th:id="|change-level-${technology.id}|"
+                              th:action="@{/technologies/{id}/level(id=${technology.technologyId})}">
+                            <button class="btn btn-outline-success btn-sm"
+                                    type="submit"
+                                    th:title="#{save}"
+                                    th:aria-label="#{save}">
+                                <i class="fas fa-floppy-disk"></i>
+                            </button>
+                        </form>
+                        <form method="post" th:action="@{/technologies/{id}/delete(id=${technology.technologyId})}">
+                            <input type="hidden" name="_method" value="delete">
+                        <button class="btn btn-outline-danger btn-sm"
+                                type="submit"
+                                th:title="#{delete}"
+                                th:aria-label="#{delete}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:replace="~{fragments/profile-paging :: qualifiedPagination(${source}, 'user', ${userCurrentPage}, ${userTotalPages},
+    ${userPageSize}, ${userSortField}, ${userSortDirection}, ${userExtraQuery})}"></div>
+</main>
+
+<div class="modal fade"
+     id="addTechnologiesModal"
+     tabindex="-1"
+     aria-labelledby="addTechnologiesModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header gap-2" >
+                <h2 class="modal-title h5"
+                    id="addTechnologiesModalLabel"
+                    th:text="#{profile.technology-add}">Add technologies</h2>
+                <span class="badge text-bg-secondary" th:text="${technologies.totalElements}">0</span>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        th:aria-label="#{cancel}"></button>
+            </div>
+            <div class="modal-body">
+                <form class="mb-3" method="get" th:action="@{/technologies}">
+                    <input type="hidden" name="modal" value="true">
+                    <div class="row g-2 mb-2 align-items-end">
+                        <div class="col-md-12">
+                            <input name="technologySearch"
+                                   type="search"
+                                   class="form-control"
+                                   th:value="${param.technologySearch}"
+                                   th:placeholder="#{filter.search}"
+                                   th:aria-label="#{filter.search}">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-outline-primary btn-sm"
+                                type="submit"
+                                th:title="#{filter.search}"
+                                th:aria-label="#{filter.search}">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <a class="btn btn-outline-secondary btn-sm"
+                           th:href="@{/technologies(modal=true)}"
+                           th:title="#{reset-search}"
+                           th:aria-label="#{reset-search}">
+                            <i class="fas fa-broom"></i>
+                        </a>
+                    </div>
+
+                </form>
+
+                <form method="post" th:action="@{/technologies/selected}">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button class="btn btn-outline-success btn-sm"
+                                type="submit"
+                                th:title="#{profile.technology-add-selected}"
+                                th:aria-label="#{profile.technology-add-selected}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="text-center"></th>
+                                <th scope="col"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${technologies.isEmpty()}">
+                                <td colspan="2"
+                                    class="text-center text-muted py-4"
+                                    th:text="#{profile.technologies-filter-empty}">No data</td>
+                            </tr>
+                            <tr th:each="technology : ${technologies.content}">
+                                <td class="text-center">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="technologyIds"
+                                           th:value="${technology.id}">
+                                </td>
+                                <td th:text="${technology.name}">Java</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+
+                <div th:replace="~{fragments/profile-paging :: qualifiedPagination(${source}, 'technology', ${technologyCurrentPage},
+                ${technologyTotalPages}, ${technologyPageSize}, ${technologySortField}, ${technologySortDirection},
+                ${technologyExtraQuery})}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('addTechnologiesModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        if (/*[[${modal}]]*/ false) {
+            modal.show();
+        }
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            if (window.location.search) {
+                window.location.href = window.location.pathname;
+            }
+        });
+
+    });
+</script>
+</body>
+</html>

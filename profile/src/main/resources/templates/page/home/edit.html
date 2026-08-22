@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="ru">
+<div th:replace="~{fragments/profile-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/profile-header :: profile-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successChangePassword}, #{profile.password-changed})}"></div>
+
+    <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row align-items-md-center gap-3 mb-4">
+                <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+                     style="width: 64px; height: 64px; min-width: 64px;">
+                    <i class="fas fa-user fa-xl"></i>
+                </div>
+                <div>
+                    <h1 class="h4 mb-1">
+                        <span th:text="${profile.lastName}">Last name</span>
+                        <span th:text="${profile.firstName}">First name</span>
+                        <span th:if="${profile.middleName}" th:text="${profile.middleName}">Middle name</span>
+                    </h1>
+                    <span class="text-muted" th:text="${profile.username}">username</span>
+                </div>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm ms-md-auto"
+                        data-bs-toggle="modal"
+                        data-bs-target="#profile-password-modal">
+                    <i class="fas fa-key me-2"></i>
+                    <span th:text="#{profile.change-password}">Change password</span>
+                </button>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="p-3 bg-body-tertiary rounded h-100">
+                        <div class="small text-muted mb-1" th:text="#{project-role}">Project role</div>
+                        <div class="fw-semibold" th:text="${profile.projectRole ?: '—'}">Role</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-body-tertiary rounded h-100">
+                        <div class="small text-muted mb-1" th:text="#{employee.current-level}">Current level</div>
+                        <div class="fw-semibold" th:text="${profile.currentLevel ?: '—'}">Level</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-body-tertiary rounded h-100">
+                        <div class="small text-muted mb-1" th:text="#{employee.labor-code-position}">Position</div>
+                        <div class="fw-semibold" th:text="${profile.laborCodePosition ?: '—'}">Position</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section th:if="${!staffEvaluations.isEmpty()}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <h2 class="h4 mb-0" th:text="#{staff-evaluations.actives}">Active staff evaluations</h2>
+                <span class="badge text-bg-secondary" th:text="${staffEvaluations.size()}">0</span>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/staff-evaluations}">
+                <span th:text="#{staff-evaluations.all}">All staff evaluations</span>
+                <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!--<div th:if="${staffEvaluations.isEmpty()}" class="card border-0 shadow-sm">
+            <div class="card-body text-center text-muted py-5">
+                <i class="fas fa-clipboard-check fa-2x mb-3"></i>
+                <div th:text="#{staff-evaluations.active-empty}">No active staff evaluations assigned</div>
+            </div>
+        </div>-->
+
+        <div th:if="${!staffEvaluations.isEmpty()}" class="row g-3">
+            <div class="col-md-6" th:each="staffEvaluation : ${staffEvaluations}">
+                <article class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                            <h3 class="h5 mb-0" th:text="${staffEvaluation.name}">Evaluation</h3>
+                            <span class="badge text-bg-success"
+                                  th:text="${#messages.msg('StaffEvaluationStatus.' + staffEvaluation.staffEvaluationStatus.name())}">
+                                Active
+                            </span>
+                        </div>
+
+                        <div class="text-muted mb-3">
+                            <i class="far fa-calendar me-1"></i>
+                            <span th:text="${#temporals.format(staffEvaluation.dateFrom, 'dd.MM.yyyy')}">01.01.2026</span>
+                            <span>—</span>
+                            <span th:text="${#temporals.format(staffEvaluation.dateTo, 'dd.MM.yyyy')}">31.01.2026</span>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge rounded-pill"
+                                  th:classappend="${staffEvaluation.staffEvaluationUserStatus.name() == 'VERIFICATION'
+                                  ? 'text-bg-warning' :
+                                  (staffEvaluation.staffEvaluationUserStatus.name() == 'COMPLETED' ? 'text-bg-success' : 'text-bg-secondary')}">
+                                <i class="fas fa-user-check me-1"></i>
+                                <span th:text="${#messages.msg('StaffEvaluationUserStatus.' + staffEvaluation.staffEvaluationUserStatus.name())}">
+                                    In progress
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="mt-3">
+                            <a class="btn btn-secondary btn-sm"
+                               th:if="${(staffEvaluation.staffEvaluationUserStatus.name() == 'NEW' || staffEvaluation.staffEvaluationUserStatus.name() == 'IN_PROGRESS') && staffEvaluation.projectRole != null}"
+                               th:href="@{/survey/{staffEvaluationId}/{role}(staffEvaluationId=${staffEvaluation.staffEvaluationId}, role=${staffEvaluation.projectRole})}"
+                               th:title="#{survey.start-or-continue}">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                            <a class="btn btn-outline-success btn-sm"
+                               th:if="${staffEvaluation.staffEvaluationUserStatus.name() == 'FEEDBACK'}"
+                               th:href="@{/survey/{staffEvaluationId}/feedback(staffEvaluationId=${staffEvaluation.staffEvaluationId})}"
+                               th:title="#{feedback.leave}">
+                                <i class="fas fa-flag-checkered"></i>
+                            </a>
+                            <a class="btn btn-outline-primary btn-sm"
+                               th:if="${staffEvaluation.staffEvaluationUserStatus.name() == 'VERIFICATION' || staffEvaluation.staffEvaluationUserStatus.name() == 'COMPLETED'}"
+                               th:href="@{/staff-evaluations/{id}/detail(id=${staffEvaluation.staffEvaluationId})}"
+                               th:title="#{staff-evaluation-results.open}">
+                                <i class="fas fa-chart-column"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="mt-5" sec:authorize="hasRole('TEAM_LEAD')" th:if="${!verifications.isEmpty()}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <h2 class="h4 mb-0" th:text="#{verification.title}">Surveys awaiting verification</h2>
+                <span class="badge text-bg-secondary" th:text="${verifications.size()}">0</span>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/verifications}">
+                <span th:text="#{verification.all}">All verifications</span>
+                <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+       <!-- <div th:if="${verifications.isEmpty()}" class="card border-0 shadow-sm">
+            <div class="card-body text-center text-muted py-5">
+                <i class="fas fa-clipboard-check fa-2x mb-3"></i>
+                <div th:text="#{verification.empty}">No surveys are awaiting verification</div>
+            </div>
+        </div>-->
+
+        <div th:if="${!verifications.isEmpty()}" class="row g-3">
+            <div class="col-md-6" th:each="verification : ${verifications}">
+                <article class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <h3 class="h5 mb-1" th:text="${verification.name}">Evaluation</h3>
+                                <div class="text-muted">
+                                    <span class="fw-semibold" th:text="${verification.employeeName}">Employee</span>
+                                    <span th:text="|(${verification.employeeUsername})|">(username)</span>
+                                </div>
+                            </div>
+                            <span class="badge"
+                                  th:classappend="${verification.staffEvaluationStatus.name() == 'ACTIVE'
+                                  ? 'text-bg-success' : 'text-bg-secondary'}"
+                                  th:text="${#messages.msg('StaffEvaluationStatus.' + verification.staffEvaluationStatus.name())}">
+                                Active
+                            </span>
+                        </div>
+
+                        <div class="text-muted mb-3">
+                            <i class="far fa-calendar me-1"></i>
+                            <span th:text="${#temporals.format(verification.dateFrom, 'dd.MM.yyyy')}">01.01.2026</span>
+                            <span>—</span>
+                            <span th:text="${#temporals.format(verification.dateTo, 'dd.MM.yyyy')}">31.01.2026</span>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge rounded-pill"
+                                  th:classappend="${verification.staffEvaluationUserStatus.name() == 'VERIFICATION'
+                                  ? 'text-bg-warning' :
+                                  (verification.staffEvaluationUserStatus.name() == 'COMPLETED'
+                                  ? 'text-bg-success' : 'text-bg-secondary')}">
+                                <i class="fas fa-user-check me-1"></i>
+                                <span th:text="${#messages.msg('StaffEvaluationUserStatus.' + verification.staffEvaluationUserStatus.name())}">
+                                    Awaiting verification
+                                </span>
+                            </span>
+                        </div>
+
+                        <a class="btn btn-secondary btn-sm mt-3"
+                           th:href="@{/verifications/{id}(id=${verification.staffEvaluationUserId})}"
+                           th:title="#{verification.open}">
+                            <i class="fas fa-clipboard-check"></i>
+                        </a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div class="modal fade"
+     id="profile-password-modal"
+     tabindex="-1"
+     aria-hidden="true"
+     th:data-redirect-url="@{/}">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content"
+              method="post"
+              th:action="@{/}"
+              th:object="${passwordChange}">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" th:text="#{profile.change-password}">
+                    Change password
+                </h2>
+                <a class="btn-close"
+                   th:href="@{/}"
+                   th:aria-label="#{cancel}">
+                </a>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="newProfilePassword"
+                           th:text="#{profile.new-password}">
+                        New password
+                    </label>
+                    <input id="newProfilePassword"
+                           class="form-control"
+                           type="password"
+                           autocomplete="new-password"
+                           th:field="*{newPassword}"
+                           th:classappend="${#fields.hasErrors('newPassword')} ? 'is-invalid'">
+                    <div class="invalid-feedback"
+                         th:if="${#fields.hasErrors('newPassword')}"
+                         th:errors="*{newPassword}">
+                        Password must contain from 4 to 10 characters
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label" for="profilePasswordConfirmation"
+                           th:text="#{profile.confirm-password}">
+                        Confirm password
+                    </label>
+                    <input id="profilePasswordConfirmation"
+                           class="form-control"
+                           type="password"
+                           autocomplete="new-password"
+                           th:field="*{passwordConfirmation}"
+                           th:classappend="${#fields.hasErrors('passwordConfirmation')} ? 'is-invalid'">
+                    <div class="invalid-feedback"
+                         th:if="${#fields.hasErrors('passwordConfirmation')}"
+                         th:errors="*{passwordConfirmation}">
+                        Passwords do not match
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center gap-2">
+                <a class="btn btn-outline-secondary"
+                   th:href="@{/}"
+                   th:title="#{cancel}">
+                    <i class="fas fa-list"></i>
+                </a>
+                <button type="submit" class="btn btn-success" th:title="#{profile.set-new-password}">
+                    <i class="fas fa-key"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const passwordModal = document.getElementById('profile-password-modal');
+        if (passwordModal) {
+            passwordModal.addEventListener('hidden.bs.modal', function () {
+                window.location.assign(passwordModal.dataset.redirectUrl);
+            });
+        }
+    });
+</script>
+
+<script th:if="${showPasswordModal}">
+    document.addEventListener('DOMContentLoaded', function () {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('profile-password-modal')).show();
+    });
+</script>
+</body>
+</html>

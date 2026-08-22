@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<div th:replace="~{fragments/profile-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/profile-header :: profile-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="mx-auto" style="max-width: 960px;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+            <div>
+                <div class="text-muted small" th:text="${survey.evaluationName}">Evaluation</div>
+                <h1 class="h4 mb-0" th:text="#{survey.title}">Survey</h1>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="text-muted">
+                    <span th:text="#{survey.question}">Question</span>
+                    <strong th:text="${survey.currentNumber}">1</strong>
+                    <span th:text="#{survey.from}">of</span>
+                    <strong th:text="${survey.questions.size()}">10</strong>
+                </div>
+                <div class="btn-group" role="group">
+                    <button th:if="${survey.canFinish}"
+                            type="button"
+                            class="btn btn-outline-success btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#finish-survey-modal"
+                            th:title="#{survey.finish}"
+                            th:aria-label="#{survey.finish}">
+                        <i class="fas fa-flag-checkered"></i>
+                    </button>
+
+                    <a class="btn btn-outline-secondary btn-sm"
+                       th:href="@{/staff-evaluations}"
+                       th:title="#{survey.return}"
+                       th:aria-label="#{survey.return}">
+                        <i class="fas fa-list"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <article class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-primary fw-semibold mb-2"
+                     th:text="${survey.currentQuestion.areaKnowledge}">
+                    Area of knowledge
+                </div>
+                <div class="text-muted mb-3" th:text="${survey.currentQuestion.section}">Section</div>
+                <h2 class="h4 mb-4" th:text="${survey.currentQuestion.text}">Question</h2>
+
+                <form id="survey-form"
+                      method="post"
+                      th:action="@{/survey/{staffEvaluationId}/{role}/{uuid}(
+                          staffEvaluationId=${survey.staffEvaluationId},
+                          role=${survey.projectRole},
+                          uuid=${survey.currentQuestion.uuid}
+                      )}"
+                      th:object="${answer}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <input class="btn-check" type="radio" id="answerYes"
+                                   th:field="*{response}" value="YES">
+                            <label class="btn btn-outline-success w-100 py-3" for="answerYes">
+                                <i class="fas fa-check me-2"></i>
+                                <span th:text="#{survey.answer.yes}">Yes</span>
+                            </label>
+                        </div>
+                        <div class="col-md-4">
+                            <input class="btn-check" type="radio" id="answerNo"
+                                   th:field="*{response}" value="NO">
+                            <label class="btn btn-outline-danger w-100 py-3" for="answerNo">
+                                <i class="fas fa-xmark me-2"></i>
+                                <span th:text="#{survey.answer.no}">No</span>
+                            </label>
+                        </div>
+                        <div class="col-md-4">
+                            <input class="btn-check" type="radio" id="answerUnknown"
+                                   th:field="*{response}" value="UNKNOWN">
+                            <label class="btn btn-outline-warning w-100 py-3" for="answerUnknown">
+                                <i class="fas fa-question me-2"></i>
+                                <span th:text="#{survey.answer.unknown}">Unknown</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="text-danger mb-3" th:if="${#fields.hasErrors('response')}"
+                         th:text="#{survey.answer.required}">
+                        Select an Answer
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row gap-2">
+                        <button class="btn btn-primary flex-grow-1"
+                                type="submit"
+                                name="action"
+                                value="continue"
+                                th:title="#{survey.continue}">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </article>
+
+        <nav class="d-flex flex-wrap justify-content-center gap-2 mt-4"
+             th:aria-label="#{survey.navigation}">
+            <a th:each="question, iteration : ${survey.questions}"
+               th:href="@{/survey/{staffEvaluationId}/{role}/{uuid}(
+                   staffEvaluationId=${survey.staffEvaluationId},
+                   role=${survey.projectRole},
+                   uuid=${question.uuid}
+               )}"
+               class="rounded-circle d-inline-flex align-items-center justify-content-center text-decoration-none"
+               th:classappend="${question.uuid == survey.currentQuestion.uuid
+                   ? 'bg-primary text-white'
+                   : (question.response != null
+                       ? (question.response.name() == 'YES'
+                           ? 'bg-success-subtle text-success'
+                           : (question.response.name() == 'NO'
+                               ? 'bg-danger-subtle text-danger'
+                               : 'bg-warning-subtle text-warning-emphasis'))
+                       : 'bg-secondary-subtle text-secondary')}"
+               style="width: 10px; height: 10px; cursor: pointer; line-height: 10px; font-size: 0.5rem; border-radius: 50%;"
+               th:title="${question.text}">
+            </a>
+        </nav>
+    </div>
+</main>
+
+<div th:replace="~{fragments/confirmation-modal :: confirmationModal(
+    ${survey.canFinish},
+    'finish-survey-modal',
+    '/survey/' + ${staffEvaluationId} + '/'+ ${projectRole} +'/complete',
+    #{survey.finish-title},
+    #{survey.finish-confirm},
+    'btn-outline-success')
+}"></div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

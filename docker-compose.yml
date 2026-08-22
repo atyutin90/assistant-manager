@@ -1,0 +1,105 @@
+services:
+  administration:
+    container_name: assistant-administration
+    build:
+      context: .
+      dockerfile: administration/Dockerfile
+    ports:
+      - "8889:8889"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-otus:5432/assistant_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-otus:29092
+    depends_on:
+      - postgres
+      - kafka
+
+  profile:
+    container_name: assistant-profile
+    build:
+      context: .
+      dockerfile: profile/Dockerfile
+    ports:
+      - "8890:8890"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/assistant_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      - postgres
+
+  manager:
+    container_name: assistant-manager
+    build:
+      context: .
+      dockerfile: manager/Dockerfile
+    ports:
+      - "8891:8891"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/assistant_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      - postgres
+
+  integration:
+    container_name: assistant-integration
+    build:
+      context: .
+      dockerfile: integration/Dockerfile
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-otus:29092
+      - SPRING_MAIL_HOST=mailpit
+      - SPRING_MAIL_PORT=1025
+    depends_on:
+      - kafka
+      - mailpit
+
+  postgres:
+    container_name: postgres-otus
+    image: "postgres:17"
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=assistant_db
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.2.0
+    container_name: zookeeper-otus
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.0
+    container_name: kafka-otus
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-otus:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka-otus:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  kafka-ui:
+    container_name: kafka-ui-otus
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8082:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+
+  mailpit:
+    container_name: mailpit
+    image: axllent/mailpit:v1.27.8
+    ports:
+      - "1025:1025"
+      - "8025:8025"

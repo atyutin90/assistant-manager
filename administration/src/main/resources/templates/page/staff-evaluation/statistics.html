@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/admin-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <h1 class="h3 mb-0" th:text="#{staff-evaluation.statistics}">Statistics</h1>
+            <div class="text-muted">
+                <span th:text="${staffEvaluation.name}">Staff evaluation</span>
+                <span class="badge ms-2"
+                      th:classappend="${staffEvaluation.draft} ? 'text-bg-secondary' : (${staffEvaluation.active} ? 'text-bg-success' : 'text-bg-danger')"
+                      th:text="${#messages.msg('StaffEvaluationStatus.' + staffEvaluation.status.name())}">Draft</span>
+            </div>
+        </div>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations}"
+               th:title="#{list}"
+               th:aria-label="#{list}">
+                <i class="fas fa-list"></i>
+            </a>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations/{id}(id=${staffEvaluation.id})}"
+               th:title="#{staff-evaluation}"
+               th:aria-label="#{staff-evaluation}">
+                <i class="fa-regular fa-chart-bar"></i>
+            </a>
+        </div>
+    </div>
+
+    <form class="mb-3" method="get" th:action="@{/staff-evaluations/{id}/statistics(id=${staffEvaluation.id})}">
+        <div class="row g-2 mb-2 align-items-end">
+            <div class="col-md-6">
+                <input name="search"
+                       type="search"
+                       class="form-control"
+                       th:value="${filter.search}"
+                       th:placeholder="#{filter.search}"
+                       th:aria-label="#{filter.search}">
+            </div>
+            <div class="col-md-6">
+                <select name="status" class="form-select" th:aria-label="#{staff-evaluation.staff-evaluation-user-status}">
+                    <option value="" th:text="#{staff-evaluation.all-statuses}">All statuses</option>
+                    <option th:each="item : ${statuses}"
+                            th:value="${item.code()}"
+                            th:selected="${item.code() == filter.status}"
+                            th:text="${item.value()}">Status</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-outline-primary btn-sm" type="submit" th:title="#{filter.search}" th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/staff-evaluations/{id}/statistics(id=${staffEvaluation.id})}"
+               th:title="#{reset-search}"
+               th:aria-label="#{reset-search}">
+                <i class="fa-solid fa-broom"></i>
+            </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+            <tr>
+                <th th:replace="~{fragments/sorting :: sorting(${source}, 'user.lastName', #{employee.last-name})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting(${source}, 'user.middleName', #{employee.middle-name})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting(${source}, 'user.firstName', #{employee.first-name})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting(${source}, 'user.username', #{employee.username})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting(${source}, 'status', #{staff-evaluation.staff-evaluation-user-status})}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${statistics.isEmpty()}">
+                <td colspan="5" class="text-center text-muted py-4" th:text="#{staff-evaluation.statistics-empty}">No data</td>
+            </tr>
+            <tr th:each="item : ${statistics.content}">
+                <td th:text="${item.lastName}">Last name</td>
+                <td th:text="${item.middleName}">Middle name</td>
+                <td th:text="${item.firstName}">First name</td>
+                <td th:text="${item.username}">Username</td>
+                <td>
+                    <span class="badge text-bg-secondary"
+                          th:text="${#messages.msg('StaffEvaluationUserStatus.' + item.status.name())}">Status</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:replace="~{fragments/paging :: paggination(${source})}"></div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

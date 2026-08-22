@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/manager-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/manager-header :: manager-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="#{manager.projects}">Projects</h1>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-success btn-sm"
+               th:href="@{/projects/new}"
+               th:title="#{add}"
+               th:aria-label="#{add}">
+                <i class="fas fa-plus"></i>
+            </a>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successDeleteOperation}, #{manager.project-deleted})}"></div>
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successCopyOperation}, #{manager.project-copy-info})}"></div>
+
+    <form class="mb-3"
+          method="get"
+          th:action="@{/projects}">
+        <input name="search"
+               type="search"
+               class="form-control"
+               th:value="${filter.search}"
+               th:placeholder="#{filter.search}"
+               th:aria-label="#{filter.search}">
+        <div class="d-flex justify-content-end mt-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    type="submit"
+                    th:title="#{filter.search}"
+                    th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/projects}"
+               th:title="#{reset-search}"
+               th:aria-label="#{reset-search}">
+                <i class="fa-solid fa-broom"></i>
+            </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+            <tr>
+                <th th:replace="~{fragments/sorting :: sorting('/projects', 'id', 'ID')}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/projects', 'name', #{manager.project-name})}"></th>
+                <th scope="col" th:text="#{manager.project-owner}">Owner</th>
+                <th scope="col" th:text="#{manager.project-description}">Description</th>
+                <th th:replace="~{fragments/sorting :: sorting('/projects', 'active', #{manager.project-active})}"></th>
+                <th scope="col" th:text="#{actions}">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${projects.isEmpty()}">
+                <td colspan="6" class="text-center text-muted py-4"
+                    th:text="#{manager.projects-empty}">
+                    No projects
+                </td>
+            </tr>
+            <tr th:each="project : ${projects.content}">
+                <td th:text="${project.id}">1</td>
+                <td th:text="${project.name}">Project</td>
+                <td>
+                    <span th:text="${project.owner != null ? project.owner.username : ''}">Owner</span>
+                </td>
+                <td style="max-width: 32rem; white-space: normal; overflow-wrap: anywhere;">
+                    <span th:text="${project.description ?: '—'}">Description</span>
+                </td>
+                <td>
+                    <i th:class="${project.active
+                        ? 'fas fa-check text-success'
+                        : 'fas fa-xmark text-secondary'}"></i>
+                </td>
+                <td>
+                    <div class="btn-group flex-nowrap" role="group">
+                        <a class="btn btn-outline-primary btn-sm"
+                           th:href="@{/projects/{id}(id=${project.id})}"
+                           th:title="#{edit}"
+                           th:aria-label="#{edit}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <form method="post"
+                              th:action="@{/projects/{id}(id=${project.id})}">
+                            <button class="btn btn-outline-secondary btn-sm rounded-0"
+                                    type="submit"
+                                    th:title="#{manager.project-copy}"
+                                    th:aria-label="#{manager.project-copy}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </form>
+                        <a class="btn btn-outline-secondary btn-sm"
+                           th:href="@{/projects/{id}/questions(id=${project.id})}"
+                           th:title="#{manager.configure-levels}"
+                           th:aria-label="#{manager.configure-levels}">
+                            <i class="fas fa-list-check"></i>
+                        </a>
+                        <a class="btn btn-outline-secondary btn-sm"
+                           th:if="${(project.owner != null ? project.owner.username : '').equals(#authentication.name) ||
+                           project.editAccessManagers.![username].contains(#authentication.name)}"
+                           th:href="@{/projects/{id}/access(id=${project.id})}"
+                           th:title="#{manager.project-access}"
+                           th:aria-label="#{manager.project-access}">
+                            <i class="fas fa-user-shield"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:replace="~{fragments/paging :: paggination('/projects')}"></div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

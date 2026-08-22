@@ -1,0 +1,49 @@
+package ru.otus.dto.filter;
+
+import lombok.Builder;
+import ru.otus.dto.page.PageDataFilter;
+
+@Builder
+public record ManagerUserFilter(
+    String search,
+    Long projectRole,
+    Long careerLevel,
+    Long skill,
+    Long project,
+    Long staffEvaluation,
+    Long managerId
+) implements PageDataFilter {
+
+    @Override
+    public String buildExtraQuery() {
+        StringBuilder query = new StringBuilder();
+        appendQueryParam(query, SEARCH, search);
+        appendQueryParam(query, PROJECT_ROLE, projectRole);
+        appendQueryParam(query, CAREER_LEVEL, careerLevel);
+        appendQueryParam(query, SKILL, skill);
+        appendQueryParam(query, PROJECT, project);
+        appendQueryParam(query, STAFF_EVALUATION, staffEvaluation);
+        return query.toString();
+    }
+
+    public static ManagerUserFilter of(EmployeeFilter employeeFilter, Long projectId,
+                                       Long staffEvaluationId, Long managerId) {
+        return ManagerUserFilter.builder()
+            .search(employeeFilter.search())
+            .projectRole(employeeFilter.projectRole())
+            .careerLevel(employeeFilter.careerLevel())
+            .skill(employeeFilter.skill())
+            .project(projectId)
+            .staffEvaluation(staffEvaluationId)
+            .managerId(managerId)
+            .build();
+    }
+
+    @Builder
+    public record EmployeeFilter(
+        String search,
+        Long projectRole,
+        Long careerLevel,
+        Long skill
+    ) {}
+}

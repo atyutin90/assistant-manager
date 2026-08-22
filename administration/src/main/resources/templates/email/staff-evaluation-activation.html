@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{email.staff-evaluation-activation.title}">Оценка персонала</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: Arial, sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+       style="width: 100%; background-color: #f4f6f8;">
+    <tr>
+        <td align="center" style="padding: 32px 16px;">
+            <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                   style="width: 100%; max-width: 600px; background-color: #ffffff;
+                          border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);">
+                <tr>
+                    <td style="padding: 32px;">
+                        <h1 th:text="#{email.staff-evaluation-activation.title}"
+                            style="margin: 0 0 24px; color: #202124; font-size: 24px;">
+                            Staff Evaluation
+                        </h1>
+                        <p th:text="#{email.staff-evaluation-activation.greeting(${fullName})}"
+                           style="margin: 0 0 16px; color: #3c4043; font-size: 16px; line-height: 24px;">
+                            Hello!
+                        </p>
+                        <p th:text="#{email.staff-evaluation-activation.message(${dateFrom}, ${dateTo})}"
+                           style="margin: 0; color: #3c4043; font-size: 16px; line-height: 24px;">
+                            You need to pass staff-evaluation.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

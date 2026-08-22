@@ -1,0 +1,63 @@
+<header th:fragment="profile-header"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+    <nav class="navbar navbar-expand-md bg-dark navbar-dark px-3">
+        <!-- Логотип -->
+        <a class="navbar-brand" th:href="@{/}">
+            <img alt="STSM logo" src="/static/images/logo.svg" th:src="@{/images/logo.svg}" height="40"/>
+        </a>
+
+        <!-- Кнопка для мобильного меню -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar" aria-controls="topNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Навигация -->
+        <div class="collapse navbar-collapse" id="topNavbar">
+            <ul class="navbar-nav me-auto" sec:authorize="hasAnyRole('USER', 'TEAM_LEAD')">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/technologies}" th:text="#{profile.technologies}">Technologies</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('USER')">
+                    <a class="nav-link" th:href="@{/staff-evaluations}" th:text="#{staff-evaluations}">Evaluations</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('TEAM_LEAD')">
+                    <a class="nav-link" th:href="@{/verifications}" th:text="#{verification.tab}">
+                        Verification
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center ms-auto gap-3">
+
+                <!-- Пользователь -->
+                <span class="text-white" sec:authentication="name"></span>
+
+                <!-- Локаль -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            th:text="${#locale.language == 'ru' ? '🇷🇺' : '🇬🇧'}">
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" th:href="@{/(lang=en)}">🇬🇧 EN</a></li>
+                        <li><a class="dropdown-item" th:href="@{/(lang=ru)}">🇷🇺 RU</a></li>
+                    </ul>
+                </div>
+
+                <!-- Logout -->
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            th:text="#{sign-out}">
+                        Sign Out
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </nav>
+</header>

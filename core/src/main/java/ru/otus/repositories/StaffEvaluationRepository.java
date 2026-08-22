@@ -1,0 +1,19 @@
+package ru.otus.repositories;
+
+import org.springframework.data.domain.Limit;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+import ru.otus.entity.StaffEvaluation;
+import ru.otus.entity.enums.StaffEvaluationStatus;
+
+import java.util.List;
+import java.util.Set;
+
+@Repository
+public interface StaffEvaluationRepository extends
+    JpaRepository<StaffEvaluation, Long>,
+    JpaSpecificationExecutor<StaffEvaluation> {
+
+    List<StaffEvaluation> findAllByStatusInOrderByDateFromDesc(Set<StaffEvaluationStatus> statuses, Limit limit);
+}

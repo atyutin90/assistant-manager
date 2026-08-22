@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/admin-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+<div th:replace="~{fragments/admin-header :: admin-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <h1 class="h3 mb-0" th:text="#{technologies}">Technologies</h1>
+            <span class="badge text-bg-secondary" th:text="${technologies.totalElements}">0</span>
+        </div>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-success btn-sm" th:href="@{/technologies/new}" th:title="#{add}">
+                <i class="fas fa-plus"></i>
+            </a>
+            <button class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#upload-technology-modal"
+                    th:title="#{upload-file}"
+                    th:aria-label="#{upload-file}">
+                <i class="fas fa-upload"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/technologies/download(search=${filter.search})}"
+               th:title="#{download-file}">
+                <i class="fas fa-download"></i>
+            </a>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{technologies.saved})}"></div>
+    <div th:replace="~{fragments/error-operation-message :: errorMessage(${error})}"></div>
+
+    <form class="mb-3" method="get" th:action="@{/technologies}">
+        <div>
+            <input name="search"
+                   type="search"
+                   class="form-control"
+                   th:value="${filter.search}"
+                   th:placeholder="#{filter.search}"
+                   th:aria-label="#{filter.search}">
+        </div>
+        <div class="d-flex justify-content-end mt-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    type="submit"
+                    th:title="#{filter.search}"
+                    th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/technologies}"
+               th:title="#{reset-search}"
+               th:aria-label="#{reset-search}">
+                <i class="fa-solid fa-broom"></i>
+            </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+            <tr>
+                <th th:replace="~{fragments/sorting :: sorting('/technologies', 'id', #{technologies.id})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/technologies', 'enabled', #{technologies.enabled})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting('/technologies', 'name', #{technologies.name})}"></th>
+                <th scope="col" th:text="#{actions}">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${technologies.isEmpty()}">
+                <td colspan="8" class="text-center text-muted py-4" th:text="#{technologies.empty}">No data</td>
+            </tr>
+            <tr th:each="technology : ${technologies.content}">
+                <td th:text="${technology.id}">Id</td>
+                <td>
+                    <i th:class="${technology.enabled ? 'fas fa-check text-success' : 'fas fa-xmark text-secondary'}"></i>
+                </td>
+                <td th:text="${technology.name}">Name</td>
+                <td>
+                    <div class="btn-group flex-nowrap" role="group">
+                        <a class="btn btn-outline-primary btn-sm"
+                           th:href="@{/technologies/{id}(id=${technology.id})}"
+                           th:title="#{edit}"
+                           th:aria-label="#{edit}">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:replace="~{fragments/paging :: paggination('/technologies')}"></div>
+</main>
+
+<div class="modal fade" id="upload-technology-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" method="post" enctype="multipart/form-data" th:action="@{/technologies/upload}">
+            <div class="modal-header">
+                <h5 class="modal-title" th:text="#{upload-technologies}">Upload technologies</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" th:aria-label="#{cancel}"></button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control"
+                       type="file"
+                       name="file"
+                       accept=".csv,text/csv"
+                       th:aria-label="#{upload-file}">
+            </div>
+            <div class="modal-footer d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:title="#{cancel}" th:aria-label="#{cancel}">
+                    <i class="fas fa-xmark"></i>
+                </button>
+                <button type="submit" class="btn btn-outline-primary btn-sm" th:title="#{upload-file}" th:aria-label="#{upload-file}">
+                    <i class="fas fa-upload"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

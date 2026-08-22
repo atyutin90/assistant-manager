@@ -1,0 +1,48 @@
+server:
+  port: 8889
+
+spring:
+  application:
+    name: administration
+  datasource:
+    url: jdbc:postgresql://localhost:5433/assistant_db
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate.hibernate.format_sql: true
+  #Туннелирование запроса DELETE через POST
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "metrics, health"
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  jwt:
+    secret: "otusotusotusotusotusotusotusotus"
+    expiration-times: 30m
+    cookie-name: ADMINISTRATION_JWT_TOKEN
+    secure-cookie: true
+  default-password: "1111"
+  kafka:
+    enabled: false
+    email-topic: email-topic

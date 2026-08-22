@@ -1,0 +1,38 @@
+<div th:fragment="deleteModal(isEdit, action, title, confirm)">
+    <div th:if="${isEdit}" class="modal fade" id="delete-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content"
+                  th:method="delete"
+                  th:action="${action}">
+                <div class="modal-header">
+                    <h5 class="modal-title" th:text="${title}">Delete</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            th:aria-label="#{cancel}">
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0" th:text="${confirm}">
+                        Delete selected record?
+                    </p>
+                </div>
+                <div class="modal-footer d-flex justify-content-center gap-2">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            data-bs-dismiss="modal"
+                            th:title="#{filter.enabled.no}"
+                            th:aria-label="#{filter.enabled.no}">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                    <button type="submit"
+                            class="btn btn-outline-danger btn-sm"
+                            th:title="#{filter.enabled.yes}"
+                            th:aria-label="#{filter.enabled.yes}">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/manager-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/manager-header :: manager-header}"></div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="#{employees.tab}">Employees</h1>
+    </div>
+
+    <form class="mb-3" method="get" th:action="@{/employees}">
+        <div class="row g-2 mb-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label" for="project" th:text="#{manager.project-filter}">Project</label>
+                <select id="project" name="project" class="form-select">
+                    <option value="" th:text="#{manager.select-project}">All projects</option>
+                    <option th:each="item : ${projects}"
+                            th:value="${item.id}"
+                            th:selected="${item.id == filter.project}"
+                            th:text="${item.name}">Project</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="projectRole" th:text="#{project-role}">Project role</label>
+                <select id="projectRole" name="projectRole" class="form-select">
+                    <option value="" th:text="#{filter.all-project-roles}">All project roles</option>
+                    <option th:each="item : ${projectRoles}"
+                            th:value="${item.id}"
+                            th:selected="${item.id == filter.projectRole}"
+                            th:text="${item.value}">Role</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-2 mb-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label" for="careerLevel" th:text="#{manager.career-level-filter}">
+                    Career level
+                </label>
+                <select id="careerLevel"
+                        name="careerLevel"
+                        class="form-select">
+                    <option value="" th:text="#{manager.all-career-levels}">All career levels</option>
+                    <option th:each="item : ${careerLevels}"
+                            th:value="${item.id}"
+                            th:selected="${item.id == filter.careerLevel}"
+                            th:text="${item.value}">Level</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="skill" th:text="#{manager.skill-filter}">Skill</label>
+                <select id="skill" name="skill" class="form-select">
+                    <option value="" th:text="#{filter.all-skills}">All skills</option>
+                    <option th:each="item : ${skills}"
+                            th:value="${item.id}"
+                            th:selected="${item.id == filter.skill}"
+                            th:text="${item.value}">Skill</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-2 mb-2 align-items-end">
+            <div class="col-md-12">
+                <select id="staffEvaluation" name="staffEvaluation" class="form-select">
+                    <option value="" th:text="#{manager.staff-evaluation-last}">All staff evaluations</option>
+                    <option th:each="item : ${staffEvaluations}"
+                            th:value="${item.id}"
+                            th:selected="${item.id == filter.staffEvaluation}"
+                            th:text="${item.name}">
+                        Staff evaluation
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <input name="search"
+               type="search"
+               class="form-control"
+               th:value="${filter.search}"
+               th:placeholder="#{filter.search}"
+               th:aria-label="#{filter.search}">
+        <div class="d-flex justify-content-end mt-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    type="submit"
+                    th:title="#{filter.search}"
+                    th:aria-label="#{filter.search}">
+                <i class="fas fa-search"></i>
+            </button>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/employees}"
+               th:title="#{reset-search}"
+               th:aria-label="#{reset-search}">
+                <i class="fa-solid fa-broom"></i>
+            </a>
+        </div>
+
+        <div th:if="${filter.project == null}"
+             class="mt-2 alert alert-info"
+             th:text="#{manager.select-project-for-results}">
+            Select a project to display results
+        </div>
+    </form>
+
+    <div th:if="${users.isEmpty()}" class="text-center text-muted py-5" th:text="#{employees.empty}">
+        No data
+    </div>
+
+    <div class="row g-3 mb-3" th:unless="${users.isEmpty()}">
+        <div class="col-12 col-md-6 col-xl-4 d-flex" th:each="user : ${users}">
+            <article class="card border-0 shadow-sm h-100 w-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">
+                                <span th:text="${user.lastName}">Last name</span>
+                                <span th:text="${user.firstName}">First name</span>
+                                <span th:if="${user.middleName != null and !user.middleName.isBlank()}"
+                                      th:text="${user.middleName}">Middle name</span>
+                            </h2>
+                            <div class="text-muted small">
+                                <i class="fas fa-user me-1"></i>
+                                <span th:text="${user.username}">Username</span>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                <i class="fas fa-envelope me-1"></i>
+                                <span th:text="${user.email ?: '—'}">Email</span>
+                            </div>
+                        </div>
+                        <a th:if="${user.staffEvaluationId != null}"
+                           class="btn btn-outline-primary btn-sm flex-shrink-0"
+                           th:href="@{/employees/{id}/detail(id=${user.id}, staffEvaluation=${user.staffEvaluationId}, project=${filter.project})}"
+                           th:title="#{staff-evaluation-results.open}"
+                           th:aria-label="#{staff-evaluation-results.open}">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button th:unless="${user.staffEvaluationId != null}"
+                                class="btn btn-outline-secondary btn-sm flex-shrink-0"
+                                type="button"
+                                th:title="#{manager.employee-results-unavailable}"
+                                th:aria-label="#{manager.employee-results-unavailable}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1" th:text="#{employee.project-role}">Project role</div>
+                        <span class="badge text-bg-secondary" th:text="${user.projectRole ?: '—'}">Role</span>
+                    </div>
+
+                    <div th:if="${filter.project != null}" class="mt-auto">
+                        <div class="fw-semibold mb-2"
+                             th:text="#{manager.skill-levels}">
+                            Skill levels
+                        </div>
+                        <div th:if="${user.skillLevels.isEmpty()}"
+                             class="small text-muted"
+                             th:text="#{manager.skill-levels-empty}">
+                            No configured skills
+                        </div>
+                        <div class="d-grid gap-2"
+                             th:unless="${user.skillLevels.isEmpty()}">
+                            <div class="d-flex justify-content-between align-items-center border rounded px-3 py-2 bg-light"
+                                 th:each="skillLevel : ${user.skillLevels}">
+                                <span class="text-break me-2"
+                                      th:text="${skillLevel.skill}">
+                                    Skill
+                                </span>
+                                <span class="badge text-bg-secondary"
+                                      th:text="${skillLevel.careerLevel ?: '—'}">
+                                    INTERN</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
