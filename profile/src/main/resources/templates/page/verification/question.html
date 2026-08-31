@@ -16,6 +16,7 @@
                     <span class="fw-semibold" th:text="${verification.employeeName}">Employee</span>
                     <span class="text-muted" th:text="|(${verification.employeeUsername})|">(username)</span>
                 </div>
+                <span class="badge text-bg-secondary mb-1" th:text="${verification.projectRole ?: '—'}">Role</span>
                 <div class="text-muted">
                     <i class="far fa-calendar me-1"></i>
                     <span th:text="${#temporals.format(verification.dateFrom, 'dd.MM.yyyy')}">01.01.2026</span>
@@ -24,7 +25,18 @@
                 </div>
             </div>
             <div class="d-flex flex-wrap align-items-center">
-                <form method="post"
+                <form th:if="${verification.canTake}"
+                      method="post"
+                      th:action="@{/verifications/{id}/take(id=${verification.staffAssignmentUserId})}">
+                    <button class="btn btn-outline-primary btn-sm"
+                            type="submit"
+                            th:title="#{verification.take}"
+                            th:aria-label="#{verification.take}">
+                        <i class="fas fa-hand"></i>
+                    </button>
+                </form>
+                <form th:if="${verification.edit}"
+                      method="post"
                       th:action="@{/verifications/{id}/confirm-all(id=${verification.staffAssignmentUserId})}">
                     <button class="btn btn-outline-success btn-sm"
                             type="submit"
@@ -48,6 +60,16 @@
                    th:aria-label="#{list}">
                     <i class="fas fa-list"></i>
                 </a>
+            </div>
+        </div>
+
+        <div th:if="${#strings.isEmpty(verification.verificationOwner)}">
+            <div th:text="#{verification.not-taken}" class="alert mb-3 alert-secondary">Not taken</div>
+        </div>
+        <div th:unless="${#strings.isEmpty(verification.verificationOwner)}">
+            <div th:unless="${verification.edit}" class="alert mb-3 alert-secondary">
+                <div class="fw-semibold" th:text="#{verification.owner-template(${verification.verificationOwner})}">Verification owner</div>
+                <div class="small mt-1" th:text="#{verification.read-only}">Read only</div>
             </div>
         </div>
 
@@ -104,7 +126,8 @@
                               th:text="${#messages.msg('AnswerResponse.' + question.employeeResponse.name())}">Yes</span>
                     </div>
 
-                    <form method="post"
+                    <form th:if="${verification.edit}"
+                          method="post"
                           th:action="@{/verifications/{id}/{uuid}(id=${verification.staffAssignmentUserId}, uuid=${question.uuid})}
                               + |#question-${question.uuid}|">
                         <input type="hidden" name="answerId" th:value="${question.answerId}">
@@ -153,6 +176,27 @@
                              th:if="${editingQuestionUuid == question.uuid and responseError}"
                              th:text="#{survey.answer.required}">Select an answer</div>
                     </form>
+
+                    <div th:unless="${verification.edit}"
+                         th:id="|verification-result-${question.uuid}|"
+                         class="border rounded p-3 bg-body-tertiary">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                            <span class="text-muted small" th:text="#{verification.result}">Verification result</span>
+                            <span th:if="${question.verifiedResponse == null}"
+                                  class="badge text-bg-secondary"
+                                  th:text="#{verification.not-verified}">Not verified</span>
+                            <span th:if="${question.verifiedResponse != null}"
+                                  class="badge"
+                                  th:classappend="${question.verifiedResponse.name() == 'YES'
+                                      ? 'text-bg-success' : 'text-bg-danger'}"
+                                  th:text="${#messages.msg('VerificationResponse.' + question.verifiedResponse.name())}">
+                                Result
+                            </span>
+                        </div>
+                        <div class="small text-muted mb-1" th:text="#{verification.comment}">Comment</div>
+                        <div class="text-break"
+                             th:text="${#strings.isEmpty(question.comment) ? '—' : question.comment}">Comment</div>
+                    </div>
                 </div>
             </article>
         </div>

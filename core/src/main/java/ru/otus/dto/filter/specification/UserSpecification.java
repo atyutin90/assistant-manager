@@ -56,7 +56,7 @@ public class UserSpecification {
     private static void filterByProjectRole(UserFilter filter, Root<User> root, CriteriaBuilder criteriaBuilder,
                                             List<Predicate> predicates) {
         if (isNotEmpty(filter.projectRole())) {
-            Join<User, ProjectRole> projectRoleJoin = root.join("projectRole");
+            Join<User, ProjectRole> projectRoleJoin = root.join("projectRoles");
             predicates.add(criteriaBuilder.equal(projectRoleJoin.get("id"), filter.projectRole()));
         }
     }

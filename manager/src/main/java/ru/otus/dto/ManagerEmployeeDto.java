@@ -14,6 +14,7 @@ public record ManagerEmployeeDto(
     String email,
     Long projectRoleId,
     String projectRole,
+    String projectRoleCode,
     Long staffEvaluationId,
     List<ManagerSkillLevelDto> skillLevels
 ) { }

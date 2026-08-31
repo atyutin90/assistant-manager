@@ -14,6 +14,10 @@ public record VerificationItemDto(
     LocalDate dateTo,
     String employeeName,
     String employeeUsername,
+    String projectRole,
+    String verificationOwner,
+    Boolean ownedByCurrentVerifier,
+    Boolean canTake,
     StaffEvaluationStatus staffEvaluationStatus,
     StaffEvaluationUserStatus staffEvaluationUserStatus
 ) {

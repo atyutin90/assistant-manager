@@ -16,6 +16,8 @@ import ru.otus.services.ProfileService;
 import ru.otus.services.StaffEvaluationUserService;
 import ru.otus.services.verification.VerificationService;
 
+import static java.lang.Boolean.TRUE;
+import static java.util.Objects.isNull;
 import static org.springframework.data.domain.Pageable.unpaged;
 
 @Controller
@@ -62,7 +64,10 @@ public class HomePageController implements AbstractPageController {
         var userId = currentUser.id();
         var profile = profileService.getProfile(userId);
         var staffEvaluations = staffEvaluationUserService.findActive(userId);
-        var verifications = verificationService.findPending(userId, unpaged()).getContent();
+        var verifications = verificationService.findPending(userId, unpaged()).getContent().stream()
+            .filter(verification -> isNull(verification.verificationOwner())
+                || TRUE.equals(verification.ownedByCurrentVerifier()))
+            .toList();
         model.addAttribute(PROFILE, profile);
         model.addAttribute(STAFF_EVALUATIONS, staffEvaluations);
         model.addAttribute(VERIFICATIONS, verifications);

@@ -4,6 +4,8 @@ DROP TABLE staff_evaluation_question;
 DROP TABLE question;
 DROP TABLE staff_evaluation;
 DROP TABLE user_role;
+DROP TABLE user_project_role;
+DROP TABLE user_responsible;
 DROP TABLE users;
 DROP TABLE career_level;
 DROP TABLE project_role;

@@ -22,7 +22,7 @@ import ru.otus.services.verification.VerificationService;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -32,6 +32,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -89,6 +90,18 @@ class VerificationPageControllerTest {
             .andExpect(view().name("page/verification/question"))
             .andExpect(model().attribute("verification", details))
             .andExpect(model().attributeExists("verificationForm"));
+    }
+
+    @Test
+    @DisplayName("режим просмотра должен показывать результат без формы редактирования")
+    void shouldRenderVerificationResultInReadOnlyMode() throws Exception {
+        var details = details(false);
+        when(verificationService.findDetails(12L, 9L)).thenReturn(details);
+
+        mvc.perform(get("/verifications/12").with(user(LEAD)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("id=\"verification-result-question-1\"")))
+            .andExpect(content().string(not(containsString("action=\"/verifications/12/question-1"))));
     }
 
     @Test
@@ -154,6 +167,16 @@ class VerificationPageControllerTest {
     }
 
     @Test
+    @DisplayName("проверяющий должен иметь возможность взять оценку в работу")
+    void shouldTakeVerification() throws Exception {
+        mvc.perform(post("/verifications/12/take").with(user(LEAD)))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/verifications/12"));
+
+        verify(verificationService).take(12L, 9L);
+    }
+
+    @Test
     @DisplayName("проверку с заполненными решениями можно завершить")
     void shouldCompleteVerification() throws Exception {
         mvc.perform(post("/verifications/12/complete").with(user(LEAD)))
@@ -164,6 +187,10 @@ class VerificationPageControllerTest {
     }
 
     private VerificationDetailsDto details() {
+        return details(true);
+    }
+
+    private VerificationDetailsDto details(boolean editable) {
         var question = VerificationQuestionDto.builder()
             .answerId(21L)
             .uuid("question-1")
@@ -181,7 +208,9 @@ class VerificationPageControllerTest {
             .employeeUsername("employee")
             .questions(List.of(question))
             .verifiedQuestionsCount(1)
-            .canFinish(true)
+            .edit(editable)
+            .canTake(!editable)
+            .canFinish(editable)
             .build();
     }
 }

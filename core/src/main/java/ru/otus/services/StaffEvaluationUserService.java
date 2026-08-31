@@ -13,5 +13,5 @@ public interface StaffEvaluationUserService {
 
     List<AssignedStaffEvaluationDto> findActive(Long userId);
 
-    StaffEvaluationResultDto findResult(Long userId, Long staffEvaluationId);
+    StaffEvaluationResultDto findResult(Long userId, Long staffEvaluationUserId);
 }

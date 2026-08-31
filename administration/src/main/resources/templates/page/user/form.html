@@ -55,18 +55,6 @@
         </div>
 
         <div class="col-md-6">
-            <label class="form-label" for="projectRole" th:text="#{employee.project-role}">Project role</label>
-            <select id="projectRole" class="form-select" th:field="*{projectRole}" th:classappend="${#fields.hasErrors('projectRole')} ? 'is-invalid'">
-                <option value=""></option>
-                <option th:each="role : ${projectRoles}"
-                        th:value="${role.id}"
-                        th:selected="${role.id == user.projectRole}"
-                        th:text="${role.value}">Role</option>
-            </select>
-            <div class="text-danger small" th:if="${#fields.hasErrors('projectRole')}" th:errors="*{projectRole}"></div>
-        </div>
-
-        <div class="col-md-6">
             <label class="form-label" for="currentLevel" th:text="#{employee.current-level}">CurrentLevel</label>
             <select id="currentLevel" class="form-select" th:field="*{currentLevel}" th:classappend="${#fields.hasErrors('currentLevel')} ? 'is-invalid'">
                 <option value=""></option>
@@ -85,9 +73,15 @@
         </div>
 
         <div class="col-md-6">
-            <label class="form-label" for="email" th:text="#{employee.email}">Email</label>
-            <input id="email" class="form-control" type="text" th:field="*{email}" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
-            <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+            <label class="form-label" for="projectRoles" th:text="#{project-roles}">Project roles</label>
+            <select id="projectRoles" class="form-select" th:field="*{projectRoles}" multiple size="7" th:classappend="${#fields.hasErrors('projectRoles')} ? 'is-invalid'">
+                <option th:each="role : ${projectRoles}"
+                        th:value="${role.id}"
+                        th:selected="${user.projectRoles != null ? #sets.contains(user.projectRoles, role.id) : false}"
+                        th:text="${role.value}">Role</option>
+            </select>
+            <div class="form-text" th:text="#{info.hold-ctrl-to-select-multiple-values}"></div>
+            <div class="text-danger small" th:if="${#fields.hasErrors('projectRoles')}" th:errors="*{projectRoles}"></div>
         </div>
 
         <div class="col-md-6">
@@ -103,21 +97,38 @@
             <div class="text-danger small" th:if="${#fields.hasErrors('userRoles')}" th:errors="*{userRoles}"></div>
         </div>
 
-        <div id="responsibleBlock"
-             class="col-md-6"
-             th:classappend="${user.userRoles != null && #sets.contains(user.userRoles, 'USER')} ? '' : 'd-none'">
-            <label class="form-label" for="responsibleId" th:text="#{employee.responsible}">Responsible</label>
-            <select id="responsibleId" class="form-select" th:field="*{responsibleId}">
-                <option value=""></option>
-                <option th:each="teamLead : ${teamLeads}"
-                        th:value="${teamLead.id}"
-                        th:text="${teamLead.value}">
-                    Team lead
-                </option>
-            </select>
+        <div class="col-md-6">
+            <label class="form-label" for="email" th:text="#{employee.email}">Email</label>
+            <input id="email" class="form-control" type="text" th:field="*{email}" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+        </div>
+
+        <div id="responsibleBlock" class="col-md-12">
+            <div class="form-label" th:text="#{employee.responsible}">Responsible</div>
+            <div class="border rounded p-3"
+                 th:classappend="${#fields.hasErrors('responsibleIds')} ? 'border-danger'">
+                <div class="row row-cols-1 row-cols-md-2 g-2">
+                    <div class="col" th:each="teamLead, stat : ${teamLeads}">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   th:field="*{responsibleIds}"
+                                   th:value="${teamLead.id}"
+                                   th:id="${'responsible-' + stat.index}">
+                            <label class="form-check-label"
+                                   th:for="${'responsible-' + stat.index}"
+                                   th:text="${teamLead.value}">Team lead</label>
+                        </div>
+                    </div>
+                    <div class="col text-muted" th:if="${teamLeads.isEmpty()}">&mdash;</div>
+                </div>
+            </div>
             <div class="form-text" th:text="#{employee.responsible-description}">
                 Select a team lead responsible for this employee
             </div>
+            <div class="text-danger small"
+                 th:if="${#fields.hasErrors('responsibleIds')}"
+                 th:errors="*{responsibleIds}"></div>
         </div>
 
         <div class="col-md-6" th:if="${!isEdit}">
@@ -204,7 +215,8 @@
 <div class="modal fade"
      id="employee-password-modal"
      tabindex="-1"
-     aria-hidden="true"
+     th:classappend="${showPasswordModal} ? 'show d-block'"
+     th:attr="aria-hidden=${showPasswordModal} ? 'false' : 'true'"
      th:if="${isEdit}">
     <div class="modal-dialog modal-dialog-centered">
         <form class="modal-content"
@@ -268,6 +280,8 @@
         </form>
     </div>
 </div>
+
+<div class="modal-backdrop fade show" th:if="${showPasswordModal}"></div>
 
 <div th:replace="~{fragments/delete-modal :: deleteModal(${isEdit}, '/users/' + ${user.id} + '/delete', #{employee.delete-title}, #{employee.delete-confirm})}"></div>
 <div th:replace="~{fragments/footer :: footer}"></div>

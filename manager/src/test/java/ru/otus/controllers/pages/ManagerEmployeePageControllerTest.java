@@ -150,12 +150,12 @@ class ManagerEmployeePageControllerTest {
         var projects = List.of(ProjectDto.builder().id(6L).name("Backend").build());
         var evaluations = List.of(ManagerStaffEvaluationDto.builder()
             .id(8L).name("Оценка 2026").build());
-        when(managerEmployeeService.findDetails(7L, 8L, 6L, 5L)).thenReturn(details);
+        when(managerEmployeeService.findDetails(7L, 8L, 6L, 5L, 1L)).thenReturn(details);
         when(projectService.findAll(org.mockito.ArgumentMatchers.any(
             ru.otus.dto.filter.ProjectFilter.class))).thenReturn(projects);
-        when(managerStaffEvaluationService.findAllByEmployeeId(7L)).thenReturn(evaluations);
+        when(managerStaffEvaluationService.findAllByEmployeeIdAndProjectRoleId(7L, 1L)).thenReturn(evaluations);
 
-        mvc.perform(get("/employees/7/detail")
+        mvc.perform(get("/employees/7/1/detail")
                 .with(user("manager"))
                 .param("staffEvaluation", "8")
                 .param("project", "6"))
@@ -167,6 +167,6 @@ class ManagerEmployeePageControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Junior")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Что такое JVM?")));
 
-        verify(managerEmployeeService).findDetails(7L, 8L, 6L, 5L);
+        verify(managerEmployeeService).findDetails(7L, 8L, 6L, 5L, 1L);
     }
 }

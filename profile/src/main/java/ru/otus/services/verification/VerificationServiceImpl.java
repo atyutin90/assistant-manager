@@ -23,6 +23,7 @@ import java.util.Map;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Comparator.comparing;
+import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -47,8 +48,8 @@ public class VerificationServiceImpl implements VerificationService {
     @Override
     public Page<VerificationItemDto> findPending(Long userId, Pageable pageable) {
         return staffEvaluationUserRepository
-            .findByUserResponsibleIdAndStatus(userId, VERIFICATION, pageable)
-            .map(this::listItemOf);
+            .findByUserResponsiblesIdAndStatus(userId, VERIFICATION, pageable)
+            .map(staffEvaluationUser -> listItemOf(staffEvaluationUser, userId));
     }
 
     @Override
@@ -58,25 +59,44 @@ public class VerificationServiceImpl implements VerificationService {
         var answers = sortedAnswers(staffEvaluationUserId, positions);
         checkAnswers(answers);
         var verifiedQuestionCount = countVerifiedQuestions(answers);
-        var staffEvaluation = staffEvaluationUser.getStaffEvaluation();
+        var editable = isOwnedBy(staffEvaluationUser, verifierId);
         return VerificationDetailsDto.builder()
             .staffAssignmentUserId(staffEvaluationUser.getId())
-            .name(staffEvaluation.getName())
-            .dateFrom(staffEvaluation.getDateFrom())
-            .dateTo(staffEvaluation.getDateTo())
+            .name(staffEvaluationUser.getStaffEvaluation().getName())
+            .dateFrom(staffEvaluationUser.getStaffEvaluation().getDateFrom())
+            .dateTo(staffEvaluationUser.getStaffEvaluation().getDateTo())
             .employeeName(staffEvaluationUser.getUser().getDisplayName())
             .employeeUsername(staffEvaluationUser.getUser().getUsername())
+            .projectRole(staffEvaluationUser.getProjectRole() != null
+                ? staffEvaluationUser.getProjectRole().getName() : null)
+            .verificationOwner(ownerNameOf(staffEvaluationUser))
+            .edit(editable)
+            .canTake(!editable)
             .feedback(staffEvaluationUser.getFeedbackMessage())
             .questions(questionsOf(answers, positions))
             .verifiedQuestionsCount(verifiedQuestionCount)
-            .canFinish(verifiedQuestionCount == answers.size())
+            .canFinish(editable && verifiedQuestionCount == answers.size())
             .build();
     }
 
     @Override
     @Transactional
+    public void take(Long staffEvaluationUserId, Long verifierId) {
+        var staffEvaluationUser = findStaffEvaluationUserForUpdate(staffEvaluationUserId, verifierId);
+        var verifier = staffEvaluationUser.getUser().getResponsibles().stream()
+            .filter(responsible -> responsible.getId().equals(verifierId))
+            .filter(responsible -> responsible.getProjectRoles().stream().anyMatch(projectRole ->
+                projectRole.getId().equals(staffEvaluationUser.getProjectRole().getId())))
+            .findFirst()
+            .orElseThrow(this::notFoundStaffEvaluationUser);
+        staffEvaluationUser.setVerificationOwner(verifier);
+        staffEvaluationUserRepository.save(staffEvaluationUser);
+    }
+
+    @Override
+    @Transactional
     public void save(Long staffEvaluationUserId, Long verifierId, VerificationFormDto form) {
-        findStaffEvaluationUser(staffEvaluationUserId, verifierId);
+        findOwnedStaffEvaluationUserForUpdate(staffEvaluationUserId, verifierId);
         var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(staffEvaluationUserId);
         var answer = answers.stream()
             .filter(value -> value.getId().equals(form.answerId()))
@@ -90,7 +110,7 @@ public class VerificationServiceImpl implements VerificationService {
     @Override
     @Transactional
     public void confirmAll(Long staffEvaluationUserId, Long verifierId) {
-        findStaffEvaluationUser(staffEvaluationUserId, verifierId);
+        findOwnedStaffEvaluationUserForUpdate(staffEvaluationUserId, verifierId);
         var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(staffEvaluationUserId);
         checkAnswers(answers);
         answers.forEach(answer -> answer.setVerifiedResponse(YES));
@@ -100,7 +120,7 @@ public class VerificationServiceImpl implements VerificationService {
     @Override
     @Transactional
     public void complete(Long assignmentId, Long verifierId) {
-        var assignment = findStaffEvaluationUser(assignmentId, verifierId);
+        var assignment = findOwnedStaffEvaluationUserForUpdate(assignmentId, verifierId);
         var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(assignmentId);
         completeVerification(assignment, answers);
     }
@@ -133,39 +153,65 @@ public class VerificationServiceImpl implements VerificationService {
         }
     }
 
-    private void completeVerification(StaffEvaluationUser staffEvaluationUser, List<StaffEvaluationAnswer> answers) {
-        if (answers.isEmpty() || answers.stream().anyMatch(answer -> answer.getVerifiedResponse() == null)) {
+    private void completeVerification(StaffEvaluationUser staffEvaluationUser,
+                                      List<StaffEvaluationAnswer> answers) {
+        if (answers.isEmpty() || answers.stream().anyMatch(answer -> isNull(answer.getVerifiedResponse()))) {
             throw errorOf(
                 CONFLICT,
                 messageSource.getMessage("error.verify-all-answers-before-completing", new Object[]{}, getLocale())
             );
         }
         staffEvaluationUser.setStatus(COMPLETED);
-        staffEvaluationUser.setVerifiedBy(staffEvaluationUser.getUser().getResponsible());
+        staffEvaluationUser.setVerifiedBy(staffEvaluationUser.getVerificationOwner());
+        staffEvaluationUser.setVerificationOwner(null);
         staffEvaluationUserRepository.save(staffEvaluationUser);
     }
 
     private StaffEvaluationUser findStaffEvaluationUser(Long userId, Long verifierId) {
         return staffEvaluationUserRepository
-            .findByIdAndUserResponsibleIdAndStatus(userId, verifierId, VERIFICATION)
+            .findByIdAndUserResponsiblesIdAndStatus(userId, verifierId, VERIFICATION)
             .orElseThrow(this::notFoundStaffEvaluationUser);
     }
 
+    private StaffEvaluationUser findStaffEvaluationUserForUpdate(Long userId, Long verifierId) {
+        return staffEvaluationUserRepository
+            .findForUpdateByIdAndUserResponsiblesIdAndStatus(userId, verifierId, VERIFICATION)
+            .orElseThrow(this::notFoundStaffEvaluationUser);
+    }
+
+    private StaffEvaluationUser findOwnedStaffEvaluationUserForUpdate(Long userId, Long verifierId) {
+        var assignment = findStaffEvaluationUserForUpdate(userId, verifierId);
+        if (!isOwnedBy(assignment, verifierId)) {
+            throw verificationNotOwned();
+        }
+        return assignment;
+    }
+
+    private boolean isOwnedBy(StaffEvaluationUser staffEvaluationUser, Long verifierId) {
+        return staffEvaluationUser.getVerificationOwner() != null
+            && staffEvaluationUser.getVerificationOwner().getId().equals(verifierId);
+    }
+
+    private String ownerNameOf(StaffEvaluationUser staffEvaluationUser) {
+        return staffEvaluationUser.getVerificationOwner() != null
+            ? staffEvaluationUser.getVerificationOwner().getDisplayName()
+            : null;
+    }
+
     private Map<Long, Integer> questionPositionMapOf(StaffEvaluationUser staffEvaluationUser) {
-        var projectRole = staffEvaluationUser.getUser().getProjectRole();
+        var projectRole = staffEvaluationUser.getProjectRole();
         if (projectRole == null) {
             return Map.of();
         }
         return staffEvaluationQuestionRepository
             .findByStaffEvaluationIdAndQuestionProjectRoleIdOrderByPositionAsc(
-                staffEvaluationUser.getStaffEvaluation().getId(),
-                projectRole.getId()
-            ).stream()
+                staffEvaluationUser.getStaffEvaluation().getId(), projectRole.getId()).stream()
             .collect(toMap(question -> question.getQuestion().getId(), StaffEvaluationQuestion::getPosition));
     }
 
-    private VerificationItemDto listItemOf(StaffEvaluationUser assignment) {
+    private VerificationItemDto listItemOf(StaffEvaluationUser assignment, Long verifierId) {
         var staffEvaluation = assignment.getStaffEvaluation();
+        var ownedByCurrentVerifier = isOwnedBy(assignment, verifierId);
         return VerificationItemDto.builder()
             .staffEvaluationUserId(assignment.getId())
             .name(staffEvaluation.getName())
@@ -173,6 +219,10 @@ public class VerificationServiceImpl implements VerificationService {
             .dateTo(staffEvaluation.getDateTo())
             .employeeName(assignment.getUser().getDisplayName())
             .employeeUsername(assignment.getUser().getUsername())
+            .projectRole(assignment.getProjectRole() != null ? assignment.getProjectRole().getName() : null)
+            .verificationOwner(ownerNameOf(assignment))
+            .ownedByCurrentVerifier(ownedByCurrentVerifier)
+            .canTake(!ownedByCurrentVerifier)
             .staffEvaluationStatus(staffEvaluation.getStatus())
             .staffEvaluationUserStatus(assignment.getStatus())
             .build();
@@ -212,6 +262,13 @@ public class VerificationServiceImpl implements VerificationService {
             NOT_FOUND,
             messageSource.getMessage("error.answer-not-belong-survey", new Object[]{},
                 getLocale())
+        );
+    }
+
+    private WebApplicationException verificationNotOwned() {
+        return errorOf(
+            CONFLICT,
+            messageSource.getMessage("error.verification-not-owned", new Object[]{}, getLocale())
         );
     }
 }

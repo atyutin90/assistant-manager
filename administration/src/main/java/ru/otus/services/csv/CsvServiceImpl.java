@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
@@ -78,7 +79,7 @@ public class CsvServiceImpl implements CsvService {
     public void uploadQuestions(MultipartFile file) {
         if (file != null && !file.isEmpty()) {
             try (var reader = bufferedReaderOf(file)) {
-                List<CsvQuestionDto> csvQuestions =  new CsvToBeanBuilder<CsvQuestionDto>(reader)
+                List<CsvQuestionDto> csvQuestions = new CsvToBeanBuilder<CsvQuestionDto>(reader)
                     .withType(CsvQuestionDto.class)
                     .withSeparator(';')
                     .withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
@@ -94,12 +95,13 @@ public class CsvServiceImpl implements CsvService {
         }
     }
 
+    @Transactional
     @Override
     public void uploadUsers(MultipartFile file) {
         if (file != null && !file.isEmpty()) {
             try (var reader = bufferedReaderOf(file)
             ) {
-                List<CsvUserDto> csvEmployees =  new CsvToBeanBuilder<CsvUserDto>(reader)
+                List<CsvUserDto> csvEmployees = new CsvToBeanBuilder<CsvUserDto>(reader)
                     .withType(CsvUserDto.class)
                     .withSeparator(';')
                     .withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
@@ -110,17 +112,22 @@ public class CsvServiceImpl implements CsvService {
                 modifyUploadUsers(uploadUsers, users);
                 userRepository.saveAll(uploadUsers);
             } catch (Exception e) {
-                throw new UploadFileException(messageSource.getMessage("error.upload-data", null, getLocale()), e);
+                if (e instanceof UploadFileException) {
+                    throw (UploadFileException) e;
+                } else {
+                    throw new UploadFileException(messageSource.getMessage("error.upload-data", null, getLocale()), e);
+                }
             }
         }
     }
 
+    @Transactional
     @Override
     public void uploadTechnologies(MultipartFile file) {
         if (file != null && !file.isEmpty()) {
             try (var reader = bufferedReaderOf(file)
             ) {
-                List<CsvTechnologyDto> csvTechnologies =  new CsvToBeanBuilder<CsvTechnologyDto>(reader)
+                List<CsvTechnologyDto> csvTechnologies = new CsvToBeanBuilder<CsvTechnologyDto>(reader)
                     .withType(CsvTechnologyDto.class)
                     .withSeparator(';')
                     .withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
@@ -208,13 +215,31 @@ public class CsvServiceImpl implements CsvService {
             .lastName(user.getLastName())
             .middleName(user.getMiddleName())
             .firstName(user.getFirstName())
-            .projectRole(user.getProjectRole() != null ? user.getProjectRole().getCode() : null)
+            .projectRoles(projectRoleCodesOf(user))
             .currentLevel(user.getCurrentLevel() != null ? user.getCurrentLevel().getCode() : null)
             .laborCodePosition(user.getLaborCodePosition())
-            .userRoles(isNotEmpty(user.getRoles()) ? user.getRoles().stream().map(Enum::name).collect(toSet()) : null)
+            .userRoles(userRoleNamesOf(user))
             .email(user.getEmail())
-            .responsibleUsername(user.getResponsible() != null ? user.getResponsible().getUsername() : null)
+            .responsibleUsernames(responsibleUsernamesOf(user))
             .build();
+    }
+
+    private static Set<String> userRoleNamesOf(User user) {
+        return isNotEmpty(user.getRoles()) ? user.getRoles().stream().map(Enum::name).collect(toSet()) : null;
+    }
+
+    private static Set<String> projectRoleCodesOf(User user) {
+        return isNotEmpty(user.getProjectRoles()) ?
+            user.getProjectRoles().stream()
+                .map(ProjectRole::getCode)
+                .collect(toSet()) :
+            null;
+    }
+
+    private static Set<String> responsibleUsernamesOf(User user) {
+        return isNotEmpty(user.getResponsibles()) ?
+            user.getResponsibles().stream().map(User::getUsername).collect(toSet()) :
+            null;
     }
 
     private User userOf(CsvUserDto csvUserDto) {
@@ -223,7 +248,7 @@ public class CsvServiceImpl implements CsvService {
             .lastName(csvUserDto.getLastName())
             .middleName(csvUserDto.getMiddleName())
             .firstName(csvUserDto.getFirstName())
-            .projectRole(projectRoleOf(csvUserDto.getProjectRole()))
+            .projectRoles(projectRolesOf(csvUserDto.getProjectRoles()))
             .currentLevel(careerLevelOf(csvUserDto.getCurrentLevel()))
             .laborCodePosition(csvUserDto.getLaborCodePosition())
             .email(csvUserDto.getEmail())
@@ -233,7 +258,7 @@ public class CsvServiceImpl implements CsvService {
                 .filter(Objects::nonNull)
                 .collect(toSet()))
             .password(csvUserDto.getPassword())
-            .responsible(responsibleOf(csvUserDto))
+            .responsibles(responsiblesOf(csvUserDto))
             .build();
     }
 
@@ -250,13 +275,46 @@ public class CsvServiceImpl implements CsvService {
             .build();
     }
 
-    private User responsibleOf(CsvUserDto csvUserDto) {
-        User responsible = null;
-        if (StringUtils.isNotEmpty(csvUserDto.getResponsibleUsername())) {
-            responsible = userRepository.findByRolesContainsAndUsername(TEAM_LEAD, csvUserDto.getResponsibleUsername())
-                .orElse(null);
+    private Set<User> responsiblesOf(CsvUserDto csvUserDto) {
+        Set<String> responsibleUsernames = csvUserDto.getResponsibleUsernames().stream()
+            .filter(StringUtils::isNotEmpty)
+            .collect(toSet());
+
+        if (!isNotEmpty(responsibleUsernames)) {
+            return Set.of();
         }
-        return responsible;
+        var responsibles = responsibleUsernames.stream()
+            .map(username -> userRepository.findByRolesContainsAndUsername(TEAM_LEAD, username).orElse(null))
+            .filter(Objects::nonNull)
+            .collect(toSet());
+        if (responsibles.size() != responsibleUsernames.size()) {
+            throw new UploadFileException(
+                messageSource.getMessage(
+                    "error.unknown-responsible",
+                    new Object[]{csvUserDto.getUsername()},
+                    getLocale()
+                )
+            );
+        }
+        checkResponsibleProjectRoles(csvUserDto, responsibles);
+        return responsibles;
+    }
+
+    private void checkResponsibleProjectRoles(CsvUserDto csvUserDto, Set<User> responsibles) {
+        var employeeRoleIds = projectRolesOf(csvUserDto.getProjectRoles()).stream()
+            .map(ProjectRole::getId)
+            .collect(toSet());
+        var coveredRoleIds = responsibles.stream()
+            .flatMap(responsible -> responsible.getProjectRoles().stream())
+            .map(ProjectRole::getId)
+            .collect(toSet());
+        if (!coveredRoleIds.containsAll(employeeRoleIds)) {
+            throw new UploadFileException(
+                messageSource.getMessage(
+                    "error.responsibles-not-cover-employee-project-roles",
+                    new Object[]{csvUserDto.getUsername()},
+                    getLocale()));
+        }
     }
 
     private Question questionOf(CsvQuestionDto csvQuestionDto) {
@@ -285,6 +343,15 @@ public class CsvServiceImpl implements CsvService {
 
     private ProjectRole projectRoleOf(String code) {
         return projectRoleRepository.findByCodeIgnoreCase(code).orElse(null);
+    }
+
+    private Set<ProjectRole> projectRolesOf(Set<String> codes) {
+        return isNotEmpty(codes) ?
+            codes.stream()
+                .map(this::projectRoleOf)
+                .filter(Objects::nonNull)
+                .collect(toSet()) :
+            Set.of();
     }
 
     private Skill skillOf(String code) {

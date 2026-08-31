@@ -13,6 +13,7 @@ import ru.otus.dto.StaffEvaluationDto;
 import ru.otus.dto.StaffEvaluationUserStatisticsDto;
 import ru.otus.dto.filter.StaffEvaluationUserFilter;
 import ru.otus.services.JwtService;
+import ru.otus.services.ProjectRoleService;
 import ru.otus.services.UserService;
 import ru.otus.services.ValueListService;
 import ru.otus.services.staffevaluation.StaffEvaluationService;
@@ -47,6 +48,9 @@ class StaffEvaluationStatisticsPageControllerTest {
 
     @MockitoBean
     private ValueListService valueListService;
+
+    @MockitoBean
+    private ProjectRoleService projectRoleService;
 
     @MockitoBean
     private StaffEvaluationService staffEvaluationService;

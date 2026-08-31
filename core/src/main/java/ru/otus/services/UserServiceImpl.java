@@ -20,6 +20,7 @@ import ru.otus.exceptions.DataNotFoundException;
 import ru.otus.exceptions.NonUniqueValueException;
 import ru.otus.repositories.UserRepository;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +114,7 @@ public class UserServiceImpl implements UserService {
                 .id(user.getId())
                 .value(displayNameOf(user))
                 .build())
+            .sorted(Comparator.comparing(IdAndValue::value))
             .toList();
     }
 
@@ -124,15 +126,15 @@ public class UserServiceImpl implements UserService {
             .firstName(data.firstName())
             .username(data.username())
             .email(data.email())
-            .projectRole(
-                ofNullable(data.projectRole()).map(it -> ProjectRole.builder().id(it).build()).orElse(null)
-            )
+            .projectRoles(ofNullable(data.projectRoles()).orElseGet(Set::of).stream()
+                .map(it -> ProjectRole.builder().id(it).build())
+                .collect(toSet()))
             .currentLevel(
                 ofNullable(data.currentLevel()).map(it -> CareerLevel.builder().id(it).build()).orElse(null)
             )
             .laborCodePosition(data.laborCodePosition())
-            .responsible(resolveResponsible(data))
-            .roles(data.userRoles().stream()
+            .responsibles(resolveResponsibles(data))
+            .roles(ofNullable(data.userRoles()).orElseGet(Set::of).stream()
                 .map(UserRole::userRoleOf)
                 .map(it -> it.orElse(null))
                 .filter(Objects::nonNull)
@@ -141,15 +143,38 @@ public class UserServiceImpl implements UserService {
             .build();
     }
 
-    private User resolveResponsible(UserDto data) {
-        if (!data.userRoles().contains(USER.name()) || data.responsibleId() == null) {
-            return null;
+    private Set<User> resolveResponsibles(UserDto data) {
+        var userRoles = ofNullable(data.userRoles()).orElseGet(Set::of);
+        var responsibleIds = ofNullable(data.responsibleIds()).orElseGet(Set::of);
+        if (!userRoles.contains(USER.name())) {
+            return Set.of();
         }
 
-        return userRepository.findById(data.responsibleId())
+        var responsibles = userRepository.findAllById(responsibleIds).stream()
             .filter(user -> user.getRoles().contains(TEAM_LEAD))
             .filter(user -> !user.getId().equals(data.id()))
-            .orElseThrow(() -> notFoundException(data.responsibleId()));
+            .collect(toSet());
+
+        validateResponsibleCoverage(data, responsibles);
+        return responsibles;
+    }
+
+    private void validateResponsibleCoverage(UserDto data, Set<User> responsibles) {
+        var projectRoleIds = ofNullable(data.projectRoles()).orElseGet(Set::of);
+        var coveredRoleIds = responsibles.stream()
+            .flatMap(responsible -> responsible.getProjectRoles().stream())
+            .map(ProjectRole::getId)
+            .collect(toSet());
+        if (!coveredRoleIds.containsAll(projectRoleIds)) {
+            throw responsibleValidationExceptionOf();
+        }
+    }
+
+    private NonUniqueValueException responsibleValidationExceptionOf() {
+        return new NonUniqueValueException(Map.of(
+            "responsibleIds",
+            messageSource.getMessage("error.responsibles-do-not-cover-project-roles", null, getLocale())
+        ));
     }
 
     private String resolvePassword(User oldUser, UserDto data) {

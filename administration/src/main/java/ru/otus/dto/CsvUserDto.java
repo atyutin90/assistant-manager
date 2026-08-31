@@ -30,8 +30,8 @@ public class CsvUserDto {
     @CsvBindByName(column = "first-name", required = true)
     private String firstName;
 
-    @CsvBindByName(column = "project-role")
-    private String projectRole;
+    @CsvBindAndSplitByName(column = "project-role", elementType = String.class)
+    private Set<String> projectRoles;
 
     @CsvBindByName(column = "current-level")
     private String currentLevel;
@@ -48,6 +48,6 @@ public class CsvUserDto {
     @CsvBindByName(column = "password")
     private String password;
 
-    @CsvBindByName(column = "responsible-username")
-    private String responsibleUsername;
+    @CsvBindAndSplitByName(column = "responsible-usernames", elementType = String.class)
+    private Set<String> responsibleUsernames;
 }

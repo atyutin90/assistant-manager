@@ -68,8 +68,7 @@ public class EmployeeSpecification {
     private static void filterByProjectRole(StaffEvaluationUserFilter filter, Root<StaffEvaluationUser> root,
                                             CriteriaBuilder cbuilder, List<Predicate> predicates) {
         if (isNotEmpty(filter.projectRole())) {
-            Join<StaffEvaluationUser, User> userJoin = root.join("user");
-            Join<User, ProjectRole> projectRoleJoin = userJoin.join("projectRole");
+            Join<StaffEvaluationUser, ProjectRole> projectRoleJoin = root.join("projectRole");
             predicates.add(cbuilder.equal(projectRoleJoin.get("id"), filter.projectRole()));
         }
     }

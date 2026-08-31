@@ -106,7 +106,7 @@ public class ProjectRoleServiceImpl implements ProjectRoleService {
         }
     }
 
-    private DataNotFoundException notFoundException(Long id) {
+    private DataNotFoundException notFoundException(Object id) {
         return new DataNotFoundException(
             messageSource.getMessage("error.not-found-data-with-id", new Object[]{id}, getLocale())
         );

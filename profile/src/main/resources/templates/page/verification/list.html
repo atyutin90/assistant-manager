@@ -20,6 +20,8 @@
             <tr>
                 <th scope="col" th:text="#{verification.employee}">Employee</th>
                 <th scope="col" th:text="#{staff-evaluation.name}">Evaluation</th>
+                <th scope="col" th:text="#{employee.project-role}">Project role</th>
+                <th scope="col" th:text="#{verification.owner}">Verification owner</th>
                 <th scope="col" th:text="#{staff-evaluation.date-from}">Date from</th>
                 <th scope="col" th:text="#{staff-evaluation.date-to}">Date to</th>
                 <th scope="col" th:text="#{actions}">Actions</th>
@@ -27,7 +29,7 @@
             </thead>
             <tbody>
             <tr th:if="${verifications.isEmpty()}">
-                <td colspan="5" class="text-center text-muted py-4" th:text="#{verification.empty}">
+                <td colspan="7" class="text-center text-muted py-4" th:text="#{verification.empty}">
                     No surveys are awaiting verification
                 </td>
             </tr>
@@ -37,14 +39,36 @@
                     <div class="small text-muted" th:text="${verification.employeeUsername}">username</div>
                 </td>
                 <td th:text="${verification.name}">Evaluation</td>
+                <td><span class="badge text-bg-secondary" th:text="${verification.projectRole ?: '—'}">Role</span></td>
+                <td>
+                    <span th:if="${#strings.isEmpty(verification.verificationOwner)}"
+                          class="text-muted"
+                          th:text="#{verification.not-taken}">Not taken</span>
+                    <span th:unless="${#strings.isEmpty(verification.verificationOwner)}"
+                          class="fw-semibold"
+                          th:text="${verification.verificationOwner}">Owner</span>
+                </td>
                 <td th:text="${#temporals.format(verification.dateFrom, 'dd.MM.yyyy')}">01.01.2026</td>
                 <td th:text="${#temporals.format(verification.dateTo, 'dd.MM.yyyy')}">31.01.2026</td>
                 <td>
-                    <a class="btn btn-secondary btn-sm"
-                       th:href="@{/verifications/{id}(id=${verification.staffEvaluationUserId})}"
-                       th:title="#{verification.open}">
-                        <i class="fas fa-clipboard-check"></i>
-                    </a>
+                    <div class="d-flex flex-nowrap">
+                        <form th:if="${verification.canTake}"
+                              method="post"
+                              th:action="@{/verifications/{id}/take(id=${verification.staffEvaluationUserId})}">
+                            <button class="btn btn-outline-primary btn-sm"
+                                    type="submit"
+                                    th:title="#{verification.take}"
+                                    th:aria-label="#{verification.take}">
+                                <i class="fas fa-hand"></i>
+                            </button>
+                        </form>
+                        <a class="btn btn-outline-secondary btn-sm"
+                           th:href="@{/verifications/{id}(id=${verification.staffEvaluationUserId})}"
+                           th:title="#{verification.view}"
+                           th:aria-label="#{verification.view}">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
                 </td>
             </tr>
             </tbody>

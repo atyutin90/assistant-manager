@@ -13,6 +13,7 @@ public class StaffEvaluationUserStatisticsDtoConverter {
             .middleName(user != null ? user.getMiddleName() : null)
             .firstName(user != null ? user.getFirstName() : null)
             .username(user != null ? user.getUsername() : null)
+            .projectRoleId(data.getProjectRole() != null ? data.getProjectRole().getId() : null)
             .status(data.getStatus())
             .build();
     }

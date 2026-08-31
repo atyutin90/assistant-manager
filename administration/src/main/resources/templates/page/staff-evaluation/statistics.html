@@ -74,6 +74,7 @@
                 <th th:replace="~{fragments/sorting :: sorting(${source}, 'user.middleName', #{employee.middle-name})}"></th>
                 <th th:replace="~{fragments/sorting :: sorting(${source}, 'user.firstName', #{employee.first-name})}"></th>
                 <th th:replace="~{fragments/sorting :: sorting(${source}, 'user.username', #{employee.username})}"></th>
+                <th th:replace="~{fragments/sorting :: sorting(${source}, 'projectRoleId', #{employee.project-role})}"></th>
                 <th th:replace="~{fragments/sorting :: sorting(${source}, 'status', #{staff-evaluation.staff-evaluation-user-status})}"></th>
             </tr>
             </thead>
@@ -87,7 +88,14 @@
                 <td th:text="${item.firstName}">First name</td>
                 <td th:text="${item.username}">Username</td>
                 <td>
-                    <span class="badge text-bg-secondary"
+                    <span class="badge text-bg-secondary" th:each="projectRole : ${projectRoles}"
+                          th:if="${item.projectRoleId == projectRole.id}"
+                          th:text="${projectRole.value}">Project role</span>
+                    <span th:if="${item.projectRoleId == null}">&mdash;</span>
+                </td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${item.status.name() == 'VERIFICATION'} ? 'text-bg-warning' : (${item.status.name() == 'COMPLETED'} ? 'text-bg-success' : 'text-bg-secondary')"
                           th:text="${#messages.msg('StaffEvaluationUserStatus.' + item.status.name())}">Status</span>
                 </td>
             </tr>

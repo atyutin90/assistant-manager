@@ -30,7 +30,7 @@ public record UserDto(
 
     String password,
 
-    Long projectRole,
+    Set<Long> projectRoles,
 
     //Текущий КУ
     Long currentLevel,
@@ -38,7 +38,7 @@ public record UserDto(
     //Должность по ТК
     String laborCodePosition,
 
-    Long responsibleId,
+    Set<Long> responsibleIds,
 
     @NotEmpty
     Set<String> userRoles

@@ -29,6 +29,7 @@ import ru.otus.services.UserTechnologyService;
 import ru.otus.services.csv.CsvService;
 import ru.otus.services.ValueListService;
 
+import static java.util.Objects.nonNull;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
 @Controller
@@ -67,7 +68,7 @@ public class UserPageController implements DownloadPageController {
     public String create(Model model) {
         model.addAttribute(USER, UserDto.builder().build());
         model.addAttribute(IS_EDIT, false);
-        enrichment(model);
+        enrichmentForm(model, null);
         return "page/user/form";
     }
 
@@ -98,9 +99,7 @@ public class UserPageController implements DownloadPageController {
                          RedirectAttributes redirectAttributes) {
         try {
             if (bindingResult.hasErrors()) {
-                model.addAttribute(IS_EDIT, false);
-                enrichment(model);
-                return "page/user/form";
+                return invalidForm(employee, model);
             }
             if (employee.id() != null) {
                 userService.update(employee);
@@ -112,9 +111,7 @@ public class UserPageController implements DownloadPageController {
 
         } catch (NonUniqueValueException ex) {
             rejectFields(bindingResult, ex.getInfo());
-            model.addAttribute(IS_EDIT, false);
-            enrichment(model);
-            return "page/user/form";
+            return invalidForm(employee, model);
         }
     }
 
@@ -125,8 +122,14 @@ public class UserPageController implements DownloadPageController {
     }
 
     @PostMapping("/users/upload")
-    public String upload(@RequestParam("file") MultipartFile file) {
-        csvService.uploadUsers(file);
+    public String upload(@RequestParam("file") MultipartFile file,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            csvService.uploadUsers(file);
+            redirectAttributes.addFlashAttribute(SUCCESS_OPERATION, true);
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute(ERROR, ex.getMessage());
+        }
         return "redirect:/users";
     }
 
@@ -149,7 +152,18 @@ public class UserPageController implements DownloadPageController {
         model.addAttribute(IS_EDIT, true);
         model.addAttribute(PASSWORD_CHANGE, passwordChange);
         model.addAttribute(SHOW_PASSWORD_MODAL, showPasswordModal);
-        enrichment(model, id);
+        enrichmentForm(model, id);
+        return "page/user/form";
+    }
+
+    private String invalidForm(UserDto user, Model model) {
+        var isEdit = nonNull(user.id());
+        model.addAttribute(IS_EDIT, isEdit);
+        if (isEdit) {
+            model.addAttribute(PASSWORD_CHANGE, UserPasswordDto.builder().build());
+            model.addAttribute(SHOW_PASSWORD_MODAL, false);
+        }
+        enrichmentForm(model, user.id());
         return "page/user/form";
     }
 
@@ -160,12 +174,14 @@ public class UserPageController implements DownloadPageController {
         model.addAttribute(USER_ROLES, userRoles);
     }
 
-    private void enrichment(Model model, Long id) {
+    private void enrichmentForm(Model model, Long id) {
         enrichment(model);
         model.addAttribute(TEAM_LEADS, userService.findTeamLeads(id));
-        model.addAttribute(TECHNOLOGY_LEVELS, valueListService.getValues("technology-level"));
-        model.addAttribute(USER_TECHNOLOGIES, userTechnologyService.findAll(
-            UserTechnologyFilter.builder().userId(id).build(), Pageable.unpaged()
-        ).getContent());
+        if (nonNull(id)) {
+            model.addAttribute(TECHNOLOGY_LEVELS, valueListService.getValues("technology-level"));
+            model.addAttribute(USER_TECHNOLOGIES, userTechnologyService.findAll(
+                UserTechnologyFilter.builder().userId(id).build(), Pageable.unpaged()
+            ).getContent());
+        }
     }
 }

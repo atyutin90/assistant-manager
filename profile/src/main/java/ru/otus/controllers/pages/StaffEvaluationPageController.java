@@ -31,13 +31,13 @@ public class StaffEvaluationPageController implements AbstractPageController {
         return "page/staff-evaluations/list";
     }
 
-    @GetMapping("/staff-evaluations/{staffEvaluationId}/detail")
+    @GetMapping("/staff-evaluations/{staffEvaluationUserId}/detail")
     public String detail(
-        @PathVariable Long staffEvaluationId,
+        @PathVariable Long staffEvaluationUserId,
         @CurrentUserParam CurrentUser currentUser,
         Model model
     ) {
-        model.addAttribute(RESULT, staffEvaluationUserService.findResult(currentUser.id(), staffEvaluationId));
+        model.addAttribute(RESULT, staffEvaluationUserService.findResult(currentUser.id(), staffEvaluationUserId));
         return "page/staff-evaluations/detail";
     }
 }

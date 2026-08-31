@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -33,15 +34,27 @@ import static ru.otus.entity.enums.StaffEvaluationUserStatus.NEW;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"answers", "verifiedBy"})
-@ToString(exclude = {"user", "staffEvaluation", "answers", "verifiedBy"})
+@EqualsAndHashCode(exclude = {"answers", "verifiedBy", "verificationOwner"})
+@ToString(exclude = {"user", "staffEvaluation", "answers", "verifiedBy", "verificationOwner"})
 @Entity
 @Table(name = "staff_evaluation_user")
 @NamedEntityGraph(
     name = STAFF_EVALUATION_USER_GRAPH,
     attributeNodes = {
-        @NamedAttributeNode("user"),
-        @NamedAttributeNode("staffEvaluation")
+        @NamedAttributeNode(value = "user", subgraph = "user-responsibles"),
+        @NamedAttributeNode("staffEvaluation"),
+        @NamedAttributeNode("projectRole"),
+        @NamedAttributeNode("verificationOwner")
+    },
+    subgraphs = {
+        @NamedSubgraph(
+            name = "user-responsibles",
+            attributeNodes = @NamedAttributeNode(value = "responsibles", subgraph = "responsible-project-roles")
+        ),
+        @NamedSubgraph(
+            name = "responsible-project-roles",
+            attributeNodes = @NamedAttributeNode("projectRoles")
+        )
     }
 )
 @NamedEntityGraph(
@@ -49,8 +62,10 @@ import static ru.otus.entity.enums.StaffEvaluationUserStatus.NEW;
     attributeNodes = {
         @NamedAttributeNode("user"),
         @NamedAttributeNode("staffEvaluation"),
+        @NamedAttributeNode("projectRole"),
         @NamedAttributeNode("answers"),
-        @NamedAttributeNode("verifiedBy")
+        @NamedAttributeNode("verifiedBy"),
+        @NamedAttributeNode("verificationOwner")
     }
 )
 public class StaffEvaluationUser {
@@ -71,6 +86,10 @@ public class StaffEvaluationUser {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_role_id")
+    private ProjectRole projectRole;
+
     @Builder.Default
     @OneToMany(mappedBy = "staffEvaluationUser", cascade = ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<StaffEvaluationAnswer> answers = new HashSet<>();
@@ -85,4 +104,8 @@ public class StaffEvaluationUser {
     @ManyToOne
     @JoinColumn(name = "verified_by")
     private User verifiedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "verification_owner_id")
+    private User verificationOwner;
 }

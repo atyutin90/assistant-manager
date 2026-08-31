@@ -2,6 +2,8 @@ package ru.otus.dto;
 
 import lombok.Builder;
 
+import java.util.Set;
+
 @Builder
 public record ProfileDto(
     Long id,
@@ -9,7 +11,7 @@ public record ProfileDto(
     String middleName,
     String firstName,
     String username,
-    String projectRole,
+    Set<String> projectRoles,
     //Текущий КУ
     String currentLevel,
     //Должность по ТК

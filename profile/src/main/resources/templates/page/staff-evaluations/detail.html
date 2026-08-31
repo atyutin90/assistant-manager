@@ -12,6 +12,7 @@
             <div>
                 <div class="text-muted small" th:text="${result.name}">Evaluation</div>
                 <h1 class="h3 mb-1" th:text="#{staff-evaluation-results.title}">Evaluation results</h1>
+                <span class="badge text-bg-secondary mb-1" th:text="${result.projectRole ?: '—'}">Role</span>
                 <div class="text-muted">
                     <i class="far fa-calendar me-1"></i>
                     <span th:text="${#temporals.format(result.dateFrom, 'dd.MM.yyyy')}">01.01.2026</span>

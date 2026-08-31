@@ -33,9 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
@@ -141,7 +143,7 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
     public void addEmployees(Long staffEvaluationId, Set<Long> employeeIds) {
         var staffEvaluation = findEntityById(staffEvaluationId);
         checkCompletedStatus(staffEvaluation);
-        addEmployeeAssignments(staffEvaluation, employeeIds);
+        addEmployeeAssignments(staffEvaluation, userRepository.findAllById(employeeIds));
         staffEvaluationRepository.save(staffEvaluation);
     }
 
@@ -151,7 +153,7 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
         var staffEvaluation = findEntityById(staffEvaluationId);
         checkCompletedStatus(staffEvaluation);
         var users = userRepository.findAll(userFilterSpecification(filter));
-        addEmployeeAssignments(staffEvaluation, users.stream().map(User::getId).collect(toSet()));
+        addEmployeeAssignments(staffEvaluation, users);
         staffEvaluationRepository.save(staffEvaluation);
     }
 
@@ -160,8 +162,7 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
     public void removeEmployees(Long staffEvaluationId, Set<Long> employeeIds) {
         var staffEvaluation = findEntityById(staffEvaluationId);
         checkDraftStatus(staffEvaluation, "error.staff-evaluation.remove-only-draft");
-        staffEvaluation.getStaffEvaluationUsers()
-            .removeIf(it -> it.getUser() != null && employeeIds.contains(it.getUser().getId()));
+        staffEvaluation.getStaffEvaluationUsers().removeIf(it -> employeeIds.contains(it.getId()));
         staffEvaluationRepository.save(staffEvaluation);
     }
 
@@ -171,7 +172,14 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
         var employeeIds = userRepository.findAll(userFilterSpecification(filter)).stream()
             .map(User::getId)
             .collect(toSet());
-        removeEmployees(staffEvaluationId, employeeIds);
+        var staffEvaluation = findEntityById(staffEvaluationId);
+        checkDraftStatus(staffEvaluation, "error.staff-evaluation.remove-only-draft");
+        staffEvaluation.getStaffEvaluationUsers().removeIf(assignment ->
+            !isNull(assignment.getUser())
+                && employeeIds.contains(assignment.getUser().getId())
+                && (isNull(filter.projectRole()) || assignment.getProjectRole().getId().equals(filter.projectRole()))
+        );
+        staffEvaluationRepository.save(staffEvaluation);
     }
 
     @Transactional
@@ -264,11 +272,28 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
             .id(data.getId())
             .name(data.getName())
             .status(data.getStatus())
-            .employeeIds(data.getStaffEvaluationUsers().stream()
-                .map(StaffEvaluationUser::getUser)
-                .map(User::getId)
-                .collect(toSet()))
+            .employeeIds(staffEvaluationEmployeeIdsWithAllProjectRoles(data))
             .build();
+    }
+
+    private Set<Long> staffEvaluationEmployeeIdsWithAllProjectRoles(StaffEvaluation staffEvaluation) {
+        return staffEvaluation.getStaffEvaluationUsers().stream()
+            .collect(groupingBy(staffEvaluationUser -> staffEvaluationUser.getUser().getId()))
+            .entrySet().stream()
+            .filter(entry -> {
+                var staffEvaluationUsers = entry.getValue();
+                var user = staffEvaluationUsers.get(0).getUser();
+                var projectRoleIds = staffEvaluationUsers.stream()
+                    .map(StaffEvaluationUser::getProjectRole)
+                    .filter(Objects::nonNull)
+                    .map(ProjectRole::getId)
+                    .collect(toSet());
+                return user.getProjectRoles().stream()
+                    .map(ProjectRole::getId)
+                    .allMatch(projectRoleIds::contains);
+            })
+            .map(Map.Entry::getKey)
+            .collect(toSet());
     }
 
     private StaffEvaluationQuestionsDto dtoQuestionsOf(StaffEvaluation data) {
@@ -312,15 +337,11 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
 
     private static boolean checkCountQuestionsForProjectRole(StaffEvaluation staffEvaluation) {
         Map<ProjectRole, Long> map = staffEvaluation.getStaffEvaluationQuestions().stream()
-            .collect(Collectors.groupingBy(
-                q -> q.getQuestion().getProjectRole(),
-                Collectors.counting()
-            ));
+            .collect(groupingBy(q -> q.getQuestion().getProjectRole(), counting()));
 
         return staffEvaluation.getStaffEvaluationUsers().stream()
-            .map(StaffEvaluationUser::getUser)
+            .map(StaffEvaluationUser::getProjectRole)
             .filter(Objects::nonNull)
-            .map(User::getProjectRole)
             .anyMatch(pr -> map.get(pr) == null || map.get(pr) == 0);
     }
 
@@ -328,6 +349,8 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
         staffEvaluation.getStaffEvaluationUsers().stream()
             .map(StaffEvaluationUser::getUser)
             .filter(Objects::nonNull)
+            .collect(toMap(User::getId, identity(), (left, right) -> left))
+            .values().stream()
             .filter(user -> user.getEmail() != null && !user.getEmail().isBlank())
             .map(user -> activationEmailFactory.create(staffEvaluation, user))
             .forEach(emailMessageService::send);
@@ -378,24 +401,29 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
         }
     }
 
-    private void addEmployeeAssignments(StaffEvaluation staffEvaluation, Set<Long> employeeIds) {
-        var assignedUserIds = staffEvaluation.getStaffEvaluationUsers().stream()
-            .map(StaffEvaluationUser::getUser)
-            .filter(Objects::nonNull)
-            .map(User::getId)
+    private void addEmployeeAssignments(StaffEvaluation staffEvaluation, List<User> employees) {
+        var assignedKeys = staffEvaluation.getStaffEvaluationUsers().stream()
+            .filter(assignment -> assignment.getUser() != null && assignment.getProjectRole() != null)
+            .map(assignment -> keyOf(assignment.getUser(), assignment.getProjectRole()))
             .collect(toSet());
 
-        for (Long id : employeeIds) {
-            if (assignedUserIds.contains(id)) {
-                continue;
+        employees.forEach(employee ->
+            employee.getProjectRoles().forEach(projectRole -> {
+                if (assignedKeys.add(keyOf(employee, projectRole))) {
+                    staffEvaluation.getStaffEvaluationUsers().add(
+                        StaffEvaluationUser.builder()
+                            .staffEvaluation(staffEvaluation)
+                            .user(employee)
+                            .projectRole(projectRole)
+                            .answers(new HashSet<>())
+                            .build()
+                    );
             }
-            var assignment = StaffEvaluationUser.builder()
-                .staffEvaluation(staffEvaluation)
-                .user(User.builder().id(id).build())
-                .answers(new HashSet<>())
-                .build();
-            staffEvaluation.getStaffEvaluationUsers().add(assignment);
-        }
+        }));
+    }
+
+    private static String keyOf(User user, ProjectRole projectRole) {
+        return "%d:%d".formatted(user.getId(), projectRole.getId());
     }
 
     private void syncAllAnswers(StaffEvaluation staffEvaluation) {
@@ -408,7 +436,9 @@ public class StaffEvaluationServiceImpl implements StaffEvaluationService {
 
     private void syncAnswers(StaffEvaluationUser staffEvaluationUser, Map<Long, Question> questionMap) {
         staffEvaluationUser.getAnswers()
-            .removeIf(it -> it.getQuestion() == null || !questionMap.containsKey(it.getQuestion().getId()));
+            .removeIf(it -> it.getQuestion() == null
+                || !questionMap.containsKey(it.getQuestion().getId())
+                || !it.getQuestion().getProjectRole().equals(staffEvaluationUser.getProjectRole()));
     }
 
     private DataNotFoundException notFoundException(Long id) {

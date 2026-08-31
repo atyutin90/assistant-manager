@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.otus.entity.StaffEvaluationUser;
@@ -16,6 +17,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
+import static jakarta.persistence.LockModeType.PESSIMISTIC_WRITE;
 import static ru.otus.entity.StaffEvaluationUser.STAFF_EVALUATION_USER_ALL_GRAPH;
 import static ru.otus.entity.StaffEvaluationUser.STAFF_EVALUATION_USER_GRAPH;
 
@@ -23,7 +25,7 @@ import static ru.otus.entity.StaffEvaluationUser.STAFF_EVALUATION_USER_GRAPH;
 public interface StaffEvaluationUserRepository extends JpaRepository<StaffEvaluationUser, Long>,
     JpaSpecificationExecutor<StaffEvaluationUser> {
 
-    @EntityGraph(value = STAFF_EVALUATION_USER_GRAPH)
+    @EntityGraph(attributePaths = {"staffEvaluation", "user", "projectRole", "verifiedBy", "verificationOwner"})
     @Override
     Page<StaffEvaluationUser> findAll(@Nullable Specification<StaffEvaluationUser> spec, Pageable pageable);
 
@@ -31,7 +33,7 @@ public interface StaffEvaluationUserRepository extends JpaRepository<StaffEvalua
     @Override
     List<StaffEvaluationUser> findAll(@Nullable Specification<StaffEvaluationUser> spec);
 
-    @EntityGraph(value = STAFF_EVALUATION_USER_GRAPH)
+    @EntityGraph(attributePaths = {"staffEvaluation", "user", "projectRole", "verifiedBy", "verificationOwner"})
     Page<StaffEvaluationUser> findByUserIdAndStaffEvaluationStatusNot(
         Long userId,
         StaffEvaluationStatus excludedStatus,
@@ -45,6 +47,7 @@ public interface StaffEvaluationUserRepository extends JpaRepository<StaffEvalua
               select max(last.id)
               from StaffEvaluationUser last
               where last.user.id = seu.user.id
+                and last.projectRole.id = seu.projectRole.id
                 and last.status = :status
           )
         """)
@@ -63,18 +66,63 @@ public interface StaffEvaluationUserRepository extends JpaRepository<StaffEvalua
         StaffEvaluationStatus status
     );
 
+    @Query("""
+        select seu
+        from StaffEvaluationUser seu
+        where seu.id = (
+              select max(last.id)
+              from StaffEvaluationUser last
+              where last.user.id = :userId
+                and last.projectRole.id = :projectRoleId
+                and last.status = :status
+          )
+        """)
     @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
-    Optional<StaffEvaluationUser> findByStaffEvaluationIdAndUserId(Long staffEvaluationId, Long userId);
+    Optional<StaffEvaluationUser> findLastByStatusForUserIdAndProjectRoleId(Long userId,
+                                                                            Long projectRoleId,
+                                                                            StaffEvaluationUserStatus status);
 
-    @EntityGraph(value = STAFF_EVALUATION_USER_GRAPH)
-    Page<StaffEvaluationUser> findByUserResponsibleIdAndStatus(
+    @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
+    Optional<StaffEvaluationUser> findByStaffEvaluationIdAndUserIdAndProjectRoleId(Long staffEvaluationId,
+                                                                                   Long userId,
+                                                                                   Long projectRoleId);
+
+    @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
+    Optional<StaffEvaluationUser> findByStaffEvaluationIdAndUserIdAndProjectRoleCodeIgnoreCase(
+        Long staffEvaluationId,
+        Long userId,
+        String projectRole
+    );
+
+    @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
+    Optional<StaffEvaluationUser> findByIdAndUserId(Long id, Long userId);
+
+    @EntityGraph(attributePaths = {"staffEvaluation", "user", "projectRole", "verifiedBy", "verificationOwner"})
+    Page<StaffEvaluationUser> findByUserResponsiblesIdAndStatus(
         Long responsibleId,
         StaffEvaluationUserStatus status,
         Pageable pageable
     );
 
     @EntityGraph(value = STAFF_EVALUATION_USER_GRAPH)
-    Optional<StaffEvaluationUser> findByIdAndUserResponsibleIdAndStatus(
+    Optional<StaffEvaluationUser> findByIdAndUserResponsiblesIdAndStatus(
+        Long id,
+        Long responsibleId,
+        StaffEvaluationUserStatus status
+    );
+
+    @Lock(PESSIMISTIC_WRITE)
+    @Query("""
+        select seu
+        from StaffEvaluationUser seu
+        join seu.user.responsibles responsible
+        join responsible.projectRoles responsibleRole
+        where seu.id = :id
+          and responsible.id = :responsibleId
+          and responsibleRole.id = seu.projectRole.id
+          and seu.status = :status
+        """)
+    Optional<StaffEvaluationUser> findForUpdateByIdAndUserResponsiblesIdAndStatus(
         Long id,
         Long responsibleId,
         StaffEvaluationUserStatus status

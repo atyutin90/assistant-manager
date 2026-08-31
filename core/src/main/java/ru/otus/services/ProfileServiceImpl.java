@@ -5,10 +5,15 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.otus.dto.ProfileDto;
+import ru.otus.entity.ProjectRole;
 import ru.otus.entity.User;
 import ru.otus.exceptions.DataNotFoundException;
 import ru.otus.repositories.UserRepository;
 
+import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 
 @Service
@@ -40,7 +45,11 @@ public class ProfileServiceImpl implements ProfileService {
             .lastName(user.getLastName())
             .middleName(user.getMiddleName())
             .username(user.getUsername())
-            .projectRole(user.getProjectRole() != null ? user.getProjectRole().getName() : null)
+            .projectRoles(isNotEmpty(user.getProjectRoles()) ?
+                user.getProjectRoles().stream()
+                    .map(ProjectRole::getName)
+                    .collect(toSet()) :
+                Set.of())
             .currentLevel(user.getCurrentLevel() != null ? user.getCurrentLevel().getName() : null)
             .laborCodePosition(user.getLaborCodePosition())
             .build();

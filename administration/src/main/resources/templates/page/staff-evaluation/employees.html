@@ -131,11 +131,12 @@
                     <td th:text="${employee.firstName}">FirstName</td>
                     <td th:text="${employee.middleName}">MiddleName</td>
                     <td th:text="${employee.username}">Username</td>
-                    <td th:each="projectRole : ${projectRoles}"
-                        th:if="${projectRole.id == employee.projectRole}"
-                        th:text="${projectRole.value}">Project role</td>
-                    <td th:if="${employee.projectRole == null}"
-                        th:text="''">Project role</td>
+                    <td>
+                        <span class="badge text-bg-secondary" th:each="projectRole : ${projectRoles}"
+                              th:if="${employee.projectRole == projectRole.id}"
+                              th:text="${projectRole.value}">Project role</span>
+                        <span th:if="${employee.projectRole == null}">&mdash;</span>
+                    </td>
                     <td>
                         <div class="btn-group flex-nowrap" role="group">
                             <button class="btn btn-outline-secondary btn-sm"
@@ -201,8 +202,8 @@
                         <div class="col-md-4">
                             <div class="small text-muted" th:text="#{employee.project-role}">Project role</div>
                             <div class="fw-semibold">
-                                <span th:each="projectRole : ${projectRoles}"
-                                      th:if="${projectRole.id == employee.projectRole}"
+                                <span class="badge text-bg-secondary" th:each="projectRole : ${projectRoles}"
+                                      th:if="${employee.projectRole == projectRole.id}"
                                       th:text="${projectRole.value}">Project role</span>
                                 <span th:if="${employee.projectRole == null}">&mdash;</span>
                             </div>
@@ -237,7 +238,10 @@
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title h5" id="addEmployeesModalLabel" th:text="#{staff-evaluation.add-employees}">Add employees</h2>
+                    <div class="d-flex align-items-center gap-2">
+                        <h2 class="modal-title h5" id="addEmployeesModalLabel" th:text="#{staff-evaluation.add-employees}">Add employees</h2>
+                        <span class="badge text-bg-secondary" th:text="${employees.totalElements}">0</span>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" th:aria-label="#{cancel}"></button>
                 </div>
                 <div class="modal-body">
@@ -329,11 +333,12 @@
                                     <td th:text="${employee.firstName}">FirstName</td>
                                     <td th:text="${employee.middleName}">MiddleName</td>
                                     <td th:text="${employee.username}">Username</td>
-                                    <td th:each="projectRole : ${projectRoles}"
-                                        th:if="${projectRole.id == employee.projectRole}"
-                                        th:text="${projectRole.value}">Project role</td>
-                                    <td th:if="${employee.projectRole == null}"
-                                        th:text="''">Project role</td>
+                                    <td>
+                                        <span class="badge text-bg-secondary me-1" th:each="projectRole : ${projectRoles}"
+                                              th:if="${employee.projectRoles != null && #sets.contains(employee.projectRoles, projectRole.id)}"
+                                              th:text="${projectRole.value}">Project role</span>
+                                        <span th:if="${employee.projectRoles == null || employee.projectRoles.isEmpty()}">&mdash;</span>
+                                    </td>
                                 </tr>
                                 </tbody>
                             </table>

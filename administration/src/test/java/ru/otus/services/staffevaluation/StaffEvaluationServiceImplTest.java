@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -36,12 +37,14 @@ class StaffEvaluationServiceImplTest {
     void shouldRemoveAllStaffEvaluationEmployeesMatchingFilter() {
         var staffEvaluationRepository = mock(StaffEvaluationRepository.class);
         var userRepository = mock(UserRepository.class);
-        var retainedUser = User.builder().id(10L).projectRole(ProjectRole.builder().id(2L).build()).build();
-        var removedUser = User.builder().id(20L).projectRole(ProjectRole.builder().id(1L).build()).build();
+        var retainedUser = User.builder().id(10L).projectRoles(Set.of(ProjectRole.builder().id(2L).build())).build();
+        var removedUser = User.builder().id(20L).projectRoles(Set.of(ProjectRole.builder().id(1L).build())).build();
         var staffEvaluation = StaffEvaluation.builder().id(1L).build();
         staffEvaluation.setStaffEvaluationUsers(new HashSet<>(Set.of(
-            StaffEvaluationUser.builder().user(retainedUser).staffEvaluation(staffEvaluation).build(),
-            StaffEvaluationUser.builder().user(removedUser).staffEvaluation(staffEvaluation).build()
+            StaffEvaluationUser.builder().user(retainedUser).projectRole(retainedUser.getProjectRoles().iterator().next())
+                .staffEvaluation(staffEvaluation).build(),
+            StaffEvaluationUser.builder().user(removedUser).projectRole(removedUser.getProjectRoles().iterator().next())
+                .staffEvaluation(staffEvaluation).build()
         )));
         when(staffEvaluationRepository.findById(1L)).thenReturn(Optional.of(staffEvaluation));
         when(userRepository.findAll(org.mockito.ArgumentMatchers.<Specification<User>>any()))
@@ -123,13 +126,40 @@ class StaffEvaluationServiceImplTest {
         assertEquals(ACTIVE, evaluation.getStatus());
     }
 
+    @Test
+    void shouldCreateAssignmentForEveryEmployeeProjectRole() {
+        var evaluationRepository = mock(StaffEvaluationRepository.class);
+        var userRepository = mock(UserRepository.class);
+        var secondRole = ProjectRole.builder().id(2L).build();
+        var firstRole = ProjectRole.builder().id(1L).build();
+        var employee = User.builder().id(7L).projectRoles(Set.of(firstRole, secondRole)).build();
+        var evaluation = StaffEvaluation.builder().id(1L).build();
+        when(evaluationRepository.findById(1L)).thenReturn(Optional.of(evaluation));
+        when(userRepository.findAllById(Set.of(7L))).thenReturn(List.of(employee));
+        var service = new StaffEvaluationServiceImpl(
+            evaluationRepository,
+            userRepository,
+            mock(QuestionRepository.class),
+            mock(MessageSource.class),
+            mock(EmailMessageService.class),
+            mock(StaffEvaluationActivationEmailFactory.class)
+        );
+
+        service.addEmployees(1L, Set.of(7L));
+
+        assertEquals(Set.of(1L, 2L), evaluation.getStaffEvaluationUsers().stream()
+            .map(StaffEvaluationUser::getProjectRole)
+            .map(ProjectRole::getId)
+            .collect(toSet()));
+    }
+
     private StaffEvaluation evaluation() {
         var projectRole = ProjectRole.builder().id(1L).build();
         var user = User.builder()
             .firstName("Иван")
             .lastName("Иванов")
             .middleName("")
-            .projectRole(projectRole)
+            .projectRoles(new HashSet<>(Set.of(projectRole)))
             .email("employee@example.com")
             .build();
         var evaluation = StaffEvaluation.builder()
@@ -139,7 +169,7 @@ class StaffEvaluationServiceImplTest {
             .dateTo(LocalDate.of(2026, 8, 31))
             .build();
         evaluation.setStaffEvaluationUsers(Set.of(
-            StaffEvaluationUser.builder().user(user).staffEvaluation(evaluation).build()
+            StaffEvaluationUser.builder().user(user).projectRole(projectRole).staffEvaluation(evaluation).build()
         ));
         evaluation.setStaffEvaluationQuestions(Set.of(
             StaffEvaluationQuestion.builder()

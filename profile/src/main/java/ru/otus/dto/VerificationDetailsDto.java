@@ -13,9 +13,13 @@ public record VerificationDetailsDto(
     LocalDate dateTo,
     String employeeName,
     String employeeUsername,
+    String projectRole,
+    String verificationOwner,
     String feedback,
     List<VerificationQuestionDto> questions,
     Integer verifiedQuestionsCount,
+    Boolean edit,
+    Boolean canTake,
     Boolean canFinish
 ) {
 }

@@ -80,28 +80,28 @@ public class SurveyPageController implements AbstractPageController {
         return surveyRedirect(staffEvaluationId, projectRole);
     }
 
-    @PostMapping("/survey/{staffEvaluationUserId}/{projectRole}/complete")
+    @PostMapping("/survey/{staffEvaluationId}/{projectRole}/complete")
     public String complete(
-        @PathVariable Long staffEvaluationUserId,
-        @CurrentUserParam CurrentUser currentUser,
-        @PathVariable String projectRole
+        @PathVariable Long staffEvaluationId,
+        @PathVariable String projectRole,
+        @CurrentUserParam CurrentUser currentUser
     ) {
-        surveyService.complete(staffEvaluationUserId, currentUser.id(), projectRole);
+        surveyService.complete(staffEvaluationId, currentUser.id(), projectRole);
         return "redirect:/staff-evaluations";
     }
 
-    @GetMapping("/survey/{staffEvaluationId}/feedback")
-    public String feedback(@PathVariable Long staffEvaluationId,
+    @GetMapping("/survey/{staffEvaluationUserId}/feedback")
+    public String feedback(@PathVariable Long staffEvaluationUserId,
                            @CurrentUserParam CurrentUser currentUser,
                            Model model) {
-        model.addAttribute(FEEDBACK, surveyService.findFeedback(staffEvaluationId, currentUser.id()));
-        model.addAttribute("staffEvaluationId", staffEvaluationId);
+        model.addAttribute(FEEDBACK, surveyService.findFeedback(staffEvaluationUserId, currentUser.id()));
+        model.addAttribute("staffEvaluationUserId", staffEvaluationUserId);
         return "page/survey/feedback";
     }
 
-    @PostMapping("/survey/{staffEvaluationId}/feedback")
+    @PostMapping("/survey/{staffEvaluationUserId}/feedback")
     public String saveFeedback(
-        @PathVariable Long staffEvaluationId,
+        @PathVariable Long staffEvaluationUserId,
         @RequestParam String action,
         @Valid @ModelAttribute(FEEDBACK) FeedbackFormDto feedback,
         BindingResult bindingResult,
@@ -109,13 +109,12 @@ public class SurveyPageController implements AbstractPageController {
         Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("staffEvaluationId", staffEvaluationId);
+            model.addAttribute("staffEvaluationUserId", staffEvaluationUserId);
             return "page/survey/feedback";
         }
-        surveyService.saveFeedback(staffEvaluationId, currentUser.id(), feedback, FINISH.equals(action));
+        surveyService.saveFeedback(staffEvaluationUserId, currentUser.id(), feedback, FINISH.equals(action));
         return "redirect:/staff-evaluations";
     }
-
 
     private SurveyAnswerDto answerOf(SurveyPageDto survey) {
         return SurveyAnswerDto.builder().response(survey.currentQuestion().response()).build();

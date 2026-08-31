@@ -94,6 +94,15 @@ public class VerificationPageController implements AbstractPageController {
         return verificationRedirect(staffEvaluationUserId);
     }
 
+    @PostMapping("/verifications/{staffEvaluationUserId}/take")
+    public String take(
+        @PathVariable Long staffEvaluationUserId,
+        @CurrentUserParam CurrentUser currentUser
+    ) {
+        verificationService.take(staffEvaluationUserId, currentUser.id());
+        return verificationRedirect(staffEvaluationUserId);
+    }
+
     @PostMapping("/verifications/{staffEvaluationUserId}/complete")
     public String complete(
         @PathVariable Long staffEvaluationUserId,

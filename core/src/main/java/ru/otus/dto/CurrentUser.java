@@ -19,7 +19,7 @@ public record CurrentUser(
 
     String password,
 
-    Long projectRole,
+    Set<Long> projectRoles,
 
     //Текущий КУ
     Long currentLevel,
@@ -27,7 +27,7 @@ public record CurrentUser(
     //Должность по ТК
     String laborCodePosition,
 
-    Long responsibleId,
+    Set<Long> responsibleIds,
 
     Set<String> userRoles
 ) {

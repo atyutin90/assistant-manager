@@ -97,9 +97,14 @@ class HomePageControllerTest {
             .staffEvaluationStatus(ACTIVE)
             .staffEvaluationUserStatus(VERIFICATION)
             .build();
+        var otherVerification = VerificationItemDto.builder()
+            .staffEvaluationUserId(13L)
+            .verificationOwner("Другой проверяющий")
+            .ownedByCurrentVerifier(false)
+            .build();
         when(profileService.getProfile(7L)).thenReturn(profile);
         when(verificationService.findPending(org.mockito.ArgumentMatchers.eq(7L),
-            org.mockito.ArgumentMatchers.any())).thenReturn(new PageImpl<>(List.of(verification)));
+            org.mockito.ArgumentMatchers.any())).thenReturn(new PageImpl<>(List.of(verification, otherVerification)));
         mvc.perform(get("/").with(user(EMPLOYEE)))
             .andExpect(status().isOk())
             .andExpect(view().name("page/home/edit"))

@@ -12,6 +12,8 @@ public interface VerificationService {
 
     VerificationDetailsDto findDetails(Long staffEvaluationUserId, Long verifierId);
 
+    void take(Long staffEvaluationUserId, Long verifierId);
+
     void save(Long staffEvaluationUserId, Long verifierId, VerificationFormDto form);
 
     void confirmAll(Long staffEvaluationUserId, Long verifierId);

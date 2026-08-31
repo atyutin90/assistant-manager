@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static ru.otus.entity.User.USER_GRAPH;
 import static ru.otus.entity.User.USER_ALL_GRAPH;
+import static ru.otus.entity.User.USER_GRAPH;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -32,6 +32,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(value = USER_ALL_GRAPH)
     @Override
     Optional<User> findById(Long id);
+
+    @EntityGraph(value = USER_ALL_GRAPH)
+    @Override
+    List<User> findAllById(Iterable<Long> ids);
 
     @EntityGraph(value = USER_ALL_GRAPH)
     Optional<User> findByUsername(String username);

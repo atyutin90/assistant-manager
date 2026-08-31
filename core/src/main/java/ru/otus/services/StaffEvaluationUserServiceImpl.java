@@ -70,8 +70,8 @@ public class StaffEvaluationUserServiceImpl implements StaffEvaluationUserServic
     }
 
     @Override
-    public StaffEvaluationResultDto findResult(Long userId, Long staffEvaluationId) {
-        var staffEvaluationUser = getStaffEvaluationUser(userId, staffEvaluationId);
+    public StaffEvaluationResultDto findResult(Long userId, Long staffEvaluationUserId) {
+        var staffEvaluationUser = getStaffEvaluationUser(userId, staffEvaluationUserId);
         var questionositionMap = questionPositionMapOf(staffEvaluationUser);
         var questions = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(staffEvaluationUser.getId()).stream()
             .sorted(comparing(answer -> questionositionMap.getOrDefault(answer.getQuestion().getId(), MAX_VALUE)))
@@ -83,6 +83,8 @@ public class StaffEvaluationUserServiceImpl implements StaffEvaluationUserServic
             .dateFrom(staffEvaluationUser.getStaffEvaluation().getDateFrom())
             .dateTo(staffEvaluationUser.getStaffEvaluation().getDateTo())
             .status(staffEvaluationUser.getStatus())
+            .projectRole(staffEvaluationUser.getProjectRole() != null
+                ? staffEvaluationUser.getProjectRole().getName() : null)
             .verifiedBy(staffEvaluationUser.getVerifiedBy() != null ?
                 staffEvaluationUser.getVerifiedBy().getDisplayName()
                 : StringUtils.EMPTY
@@ -94,8 +96,8 @@ public class StaffEvaluationUserServiceImpl implements StaffEvaluationUserServic
     }
 
     @Nonnull
-    private StaffEvaluationUser getStaffEvaluationUser(Long userId, Long staffEvaluationId) {
-        return staffEvaluationUserRepository.findByStaffEvaluationIdAndUserId(staffEvaluationId, userId)
+    private StaffEvaluationUser getStaffEvaluationUser(Long userId, Long staffEvaluationUserId) {
+        return staffEvaluationUserRepository.findByIdAndUserId(staffEvaluationUserId, userId)
             .orElseThrow(() -> errorOf(
                 NOT_FOUND,
                 messageSource.getMessage("error.staff-evaluation-not-found", new Object[]{}, getLocale()))
@@ -104,30 +106,27 @@ public class StaffEvaluationUserServiceImpl implements StaffEvaluationUserServic
 
     private AssignedStaffEvaluationDto dtoOf(StaffEvaluationUser assignment) {
         var evaluation = assignment.getStaffEvaluation();
-        return new AssignedStaffEvaluationDto(
-            assignment.getId(),
-            evaluation.getId(),
-            evaluation.getName(),
-            evaluation.getDateFrom(),
-            evaluation.getDateTo(),
-            evaluation.getStatus(),
-            assignment.getUser().getProjectRole() != null
-                ? assignment.getUser().getProjectRole().getCode()
-                : null,
-            assignment.getStatus()
-        );
+        return AssignedStaffEvaluationDto.builder()
+            .staffEvaluationUserId(assignment.getId())
+            .staffEvaluationId(evaluation.getId())
+            .name(evaluation.getName())
+            .dateFrom(evaluation.getDateFrom())
+            .dateTo(evaluation.getDateTo())
+            .staffEvaluationStatus(evaluation.getStatus())
+            .projectRole(assignment.getProjectRole() != null ? assignment.getProjectRole().getName() : null)
+            .projectRoleCode(assignment.getProjectRole() != null ? assignment.getProjectRole().getCode() : null)
+            .staffEvaluationUserStatus(assignment.getStatus())
+            .build();
     }
 
     private Map<Long, Integer> questionPositionMapOf(StaffEvaluationUser staffEvaluationUser) {
-        var projectRole = staffEvaluationUser.getUser().getProjectRole();
+        var projectRole = staffEvaluationUser.getProjectRole();
         if (projectRole == null) {
             return Map.of();
         }
         return staffEvaluationQuestionRepository
             .findByStaffEvaluationIdAndQuestionProjectRoleIdOrderByPositionAsc(
-                staffEvaluationUser.getStaffEvaluation().getId(),
-                projectRole.getId()
-            ).stream()
+                staffEvaluationUser.getStaffEvaluation().getId(), projectRole.getId()).stream()
             .collect(toMap(question -> question.getQuestion().getId(), StaffEvaluationQuestion::getPosition));
     }
 

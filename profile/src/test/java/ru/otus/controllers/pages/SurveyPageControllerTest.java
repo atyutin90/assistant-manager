@@ -133,7 +133,7 @@ class SurveyPageControllerTest {
             .andExpect(status().isOk())
             .andExpect(view().name("page/survey/feedback"))
             .andExpect(model().attribute("feedback", feedback))
-            .andExpect(model().attribute("staffEvaluationId", 3L));
+            .andExpect(model().attribute("staffEvaluationUserId", 3L));
     }
 
     @Test

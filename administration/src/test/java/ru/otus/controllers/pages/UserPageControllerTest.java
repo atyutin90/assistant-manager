@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -96,7 +97,7 @@ public class UserPageControllerTest {
             .andExpect(status().isOk())
             .andExpect(view().name("page/user/form"))
             .andExpect(model().attribute(IS_EDIT, false))
-            .andExpect(model().attributeExists(USER, PROJECT_ROLES, CAREER_LEVELS, USER_ROLES));
+            .andExpect(model().attributeExists(USER, PROJECT_ROLES, CAREER_LEVELS, USER_ROLES, TEAM_LEADS));
     }
 
     @DisplayName("форма пользователя должна отображаться с данными смены пароля")
@@ -125,10 +126,14 @@ public class UserPageControllerTest {
                 .param("firstName", "Иван")
                 .param("username", "ivan")
                 .param("email", "ivan@example.com")
+                .param("projectRoles", "1", "2")
+                .param("responsibleIds", "10", "11")
                 .param("userRoles", "USER"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/users/15"));
-        verify(userService).create(any(UserDto.class));
+        verify(userService).create(argThat(user ->
+            user.projectRoles().equals(Set.of(1L, 2L))
+                && user.responsibleIds().equals(Set.of(10L, 11L))));
     }
 
     @DisplayName("изменяемый пользователь должен создаваться")

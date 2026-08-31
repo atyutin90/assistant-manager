@@ -15,6 +15,7 @@ public record AssignedStaffEvaluationDto(
     LocalDate dateTo,
     StaffEvaluationStatus staffEvaluationStatus,
     String projectRole,
+    String projectRoleCode,
     StaffEvaluationUserStatus staffEvaluationUserStatus
 ) {
 }
