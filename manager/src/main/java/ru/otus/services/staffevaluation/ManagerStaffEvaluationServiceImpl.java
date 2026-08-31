@@ -18,7 +18,7 @@ import static ru.otus.entity.enums.StaffEvaluationStatus.COMPLETED;
 @RequiredArgsConstructor
 public class ManagerStaffEvaluationServiceImpl implements ManagerStaffEvaluationService {
 
-    private static final int LIMIT_RECORDS = 100;
+    private static final int LIMIT_RECORDS = 50;
 
     private final StaffEvaluationRepository staffEvaluationRepository;
 
@@ -33,12 +33,13 @@ public class ManagerStaffEvaluationServiceImpl implements ManagerStaffEvaluation
     }
 
     @Override
-    public List<ManagerStaffEvaluationDto> findAllByEmployeeId(Long employeeId) {
+    public List<ManagerStaffEvaluationDto> findAllByEmployeeIdAndProjectRoleId(Long employeeId, Long projectRoleId) {
         return staffEvaluationRepository.findAllByStatusInOrderByDateFromDesc(
                 Set.of(ACTIVE, COMPLETED),
                 Limit.of(LIMIT_RECORDS)).stream()
             .filter(se -> se.getStaffEvaluationUsers().stream()
                 .anyMatch(seu -> employeeId.equals(seu.getUser().getId()) &&
+                        seu.getProjectRole().getId().equals(projectRoleId) &&
                     Set.of(
                         StaffEvaluationUserStatus.COMPLETED,
                         StaffEvaluationUserStatus.FEEDBACK,

@@ -68,9 +68,10 @@ public class ManagerEmployeePageController implements AbstractPageController {
         return "page/employee/list";
     }
 
-    @GetMapping("/employees/{employeeId}/detail")
+    @GetMapping("/employees/{employeeId}/{projectRoleId}/detail")
     public String details(
         @PathVariable Long employeeId,
+        @PathVariable Long projectRoleId,
         @RequestParam(required = false) Long staffEvaluation,
         @RequestParam(required = false, name = PROJECT) Long projectId,
         @CurrentUserParam CurrentUser currentUser,
@@ -78,9 +79,11 @@ public class ManagerEmployeePageController implements AbstractPageController {
     ) {
         var projectFilter = projectFilterOf(currentUser);
         var projects = projectService.findAll(projectFilter);
-        model.addAttribute(EMPLOYEE_DETAILS, managerEmployeeService.findDetails(employeeId, staffEvaluation, projectId, currentUser.id()));
+        model.addAttribute(EMPLOYEE_DETAILS,
+            managerEmployeeService.findDetails(employeeId, staffEvaluation, projectId, currentUser.id(), projectRoleId));
         model.addAttribute(PROJECTS, projects);
-        model.addAttribute(STAFF_EVALUATIONS, managerStaffEvaluationService.findAllByEmployeeId(employeeId));
+        model.addAttribute(STAFF_EVALUATIONS,
+            managerStaffEvaluationService.findAllByEmployeeIdAndProjectRoleId(employeeId, projectRoleId));
         return "page/employee/detail";
     }
 

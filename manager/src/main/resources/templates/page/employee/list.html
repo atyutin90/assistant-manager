@@ -130,7 +130,7 @@
                         </div>
                         <a th:if="${user.staffEvaluationId != null}"
                            class="btn btn-outline-primary btn-sm flex-shrink-0"
-                           th:href="@{/employees/{id}/detail(id=${user.id}, staffEvaluation=${user.staffEvaluationId}, project=${filter.project})}"
+                           th:href="@{/employees/{id}/{projectRoleId}/detail(id=${user.id}, projectRoleId=${user.projectRoleId()}, staffEvaluation=${user.staffEvaluationId}, project=${filter.project})}"
                            th:title="#{staff-evaluation-results.open}"
                            th:aria-label="#{staff-evaluation-results.open}">
                             <i class="fas fa-eye"></i>

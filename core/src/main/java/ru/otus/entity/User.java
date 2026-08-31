@@ -9,6 +9,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
@@ -26,14 +28,14 @@ import ru.otus.entity.enums.UserRole;
 import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.SPACE;
-import static ru.otus.entity.User.USER_GRAPH;
 import static ru.otus.entity.User.USER_ALL_GRAPH;
+import static ru.otus.entity.User.USER_GRAPH;
 
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"roles", "projectRole", "currentLevel", "responsible"})
-@ToString(exclude = {"roles", "projectRole", "currentLevel", "responsible"})
+@EqualsAndHashCode(exclude = {"roles", "projectRoles", "currentLevel", "responsible"})
+@ToString(exclude = {"roles", "projectRoles", "currentLevel", "responsible"})
 @Table(name = "users")
 @Builder
 @NoArgsConstructor
@@ -42,7 +44,7 @@ import static ru.otus.entity.User.USER_ALL_GRAPH;
     name = USER_ALL_GRAPH,
     attributeNodes = {
         @NamedAttributeNode("roles"),
-        @NamedAttributeNode("projectRole"),
+        @NamedAttributeNode("projectRoles"),
         @NamedAttributeNode("currentLevel"),
         @NamedAttributeNode("responsible")
     }
@@ -50,7 +52,6 @@ import static ru.otus.entity.User.USER_ALL_GRAPH;
 @NamedEntityGraph(
     name = USER_GRAPH,
     attributeNodes = {
-        @NamedAttributeNode("projectRole"),
         @NamedAttributeNode("currentLevel"),
         @NamedAttributeNode("responsible")
     }
@@ -89,9 +90,14 @@ public class User {
     @Column(name = "role")
     private Set<UserRole> roles;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_role_id")
-    private ProjectRole projectRole;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @BatchSize(size = 10)
+    @JoinTable(
+        name = "user_project_role",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "project_role_id")
+    )
+    private Set<ProjectRole> projectRoles;
 
     //Текущий КУ
     @ManyToOne

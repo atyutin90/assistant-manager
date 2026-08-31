@@ -55,18 +55,6 @@
         </div>
 
         <div class="col-md-6">
-            <label class="form-label" for="projectRole" th:text="#{employee.project-role}">Project role</label>
-            <select id="projectRole" class="form-select" th:field="*{projectRole}" th:classappend="${#fields.hasErrors('projectRole')} ? 'is-invalid'">
-                <option value=""></option>
-                <option th:each="role : ${projectRoles}"
-                        th:value="${role.id}"
-                        th:selected="${role.id == user.projectRole}"
-                        th:text="${role.value}">Role</option>
-            </select>
-            <div class="text-danger small" th:if="${#fields.hasErrors('projectRole')}" th:errors="*{projectRole}"></div>
-        </div>
-
-        <div class="col-md-6">
             <label class="form-label" for="currentLevel" th:text="#{employee.current-level}">CurrentLevel</label>
             <select id="currentLevel" class="form-select" th:field="*{currentLevel}" th:classappend="${#fields.hasErrors('currentLevel')} ? 'is-invalid'">
                 <option value=""></option>
@@ -85,9 +73,15 @@
         </div>
 
         <div class="col-md-6">
-            <label class="form-label" for="email" th:text="#{employee.email}">Email</label>
-            <input id="email" class="form-control" type="text" th:field="*{email}" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
-            <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+            <label class="form-label" for="projectRoles" th:text="#{project-roles}">Project roles</label>
+            <select id="projectRoles" class="form-select" th:field="*{projectRoles}" multiple size="7" th:classappend="${#fields.hasErrors('projectRoles')} ? 'is-invalid'">
+                <option th:each="role : ${projectRoles}"
+                        th:value="${role.id}"
+                        th:selected="${user.projectRoles != null ? #sets.contains(user.projectRoles, role.id) : false}"
+                        th:text="${role.value}">Role</option>
+            </select>
+            <div class="form-text" th:text="#{info.hold-ctrl-to-select-multiple-values}"></div>
+            <div class="text-danger small" th:if="${#fields.hasErrors('projectRoles')}" th:errors="*{projectRoles}"></div>
         </div>
 
         <div class="col-md-6">
@@ -101,6 +95,12 @@
             </select>
             <div class="form-text" th:text="#{info.hold-ctrl-to-select-multiple-values}"></div>
             <div class="text-danger small" th:if="${#fields.hasErrors('userRoles')}" th:errors="*{userRoles}"></div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="email" th:text="#{employee.email}">Email</label>
+            <input id="email" class="form-control" type="text" th:field="*{email}" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+            <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
         </div>
 
         <div id="responsibleBlock"

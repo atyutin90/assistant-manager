@@ -30,6 +30,7 @@ import ru.otus.repositories.StaffEvaluationAnswerRepository;
 import ru.otus.repositories.StaffEvaluationQuestionRepository;
 import ru.otus.repositories.StaffEvaluationUserRepository;
 import ru.otus.repositories.UserRepository;
+import ru.otus.services.ProjectRoleService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,11 +38,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
+import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.collectingAndThen;
@@ -75,6 +78,8 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
 
     private final CareerLevelRepository careerLevelRepository;
 
+    private final ProjectRoleService projectRoleService;
+
     private final StaffEvaluationUserRepository staffEvaluationUserRepository;
 
     private final StaffEvaluationAnswerRepository staffEvaluationAnswerRepository;
@@ -96,45 +101,29 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
         // we should think about a better way to handle this in the future.
         var employees = userRepository.findAll(userFilterSpecification(userFilter));
 
-        var staffEvaluationUserMap = completedEvaluationsOf(filter).stream()
-            .collect(toMap(staffEvaluationUser -> staffEvaluationUser.getUser().getId(), identity()));
-
-        return employees.stream()
-            .map(em -> ofNullable(staffEvaluationUserMap.get(em.getId()))
-                .map(seu -> dtoOf(em, calculateSkillLevelsForEmployee(em, seu, context), seu))
-                .orElseGet(() -> dtoOf(em, defaultSkillLevelsForEmployee(context)))
-            ).filter(user -> matchesCareerLevel(user, filter))
-            .sorted(comparing(ManagerEmployeeDto::lastName))
-            .toList();
+        return managerEmployeeDtoListOf(filter, employees, context);
     }
 
     @Override
     public ManagerEmployeeDetailsDto findDetails(Long employeeId,
                                                  Long staffEvaluationId,
                                                  Long projectId,
-                                                 Long managerId) {
-        var staffEvaluationUser = staffEvaluationUserRepository
-            .findByStaffEvaluationIdAndUserId(staffEvaluationId, employeeId)
-            .orElseThrow(() -> errorOf(
-                NOT_FOUND,
-                messageSource.getMessage("error.staff-evaluation-not-found", new Object[]{}, getLocale())
-            ));
-        var questionPositionMap = questionPositionMapOf(staffEvaluationUser);
-        var answers = staffEvaluationAnswerRepository.findByStaffEvaluationUserId(staffEvaluationUser.getId()).stream()
-            .sorted(comparingInt(answer -> questionPositionMap.getOrDefault(answer.getQuestion().getId(), MAX_VALUE)))
-            .toList();
+                                                 Long managerId,
+                                                 Long projectRoleId) {
+        checkRole(projectRoleId);
         var accessibleProjectId = accessibleProjectIdOf(projectId, managerId);
         var projectQuestions = accessibleProjectId != null ?
             projectQuestionRepository.findByProjectId(accessibleProjectId) :
             List.<AssessmentProjectQuestion>of();
-        var projectQuestionIds = projectQuestions.stream()
-            .map(value -> value.getQuestion().getId())
-            .collect(toSet());
-        var projectAnswers = answers.stream()
-            .filter(answer -> projectQuestionIds.contains(answer.getQuestion().getId()))
-            .toList();
+        var staffEvaluationUser = staffEvaluationUserOf(staffEvaluationId, employeeId, projectRoleId);
+        var answers = answersOf(staffEvaluationUser);
+        var projectAnswers = projectAnswersOf(projectQuestions, answers);
         var skillGroups = skillGroupsOf(projectQuestions, projectAnswers);
         return detailsOf(staffEvaluationUser, projectAnswers, skillGroups, accessibleProjectId);
+    }
+
+    private void checkRole(Long projectRoleId) {
+        projectRoleService.findById(projectRoleId);
     }
 
     private Long accessibleProjectIdOf(Long projectId, Long managerId) {
@@ -157,7 +146,8 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
             .fullName(employee.getDisplayName())
             .username(employee.getUsername())
             .email(employee.getEmail())
-            .projectRole(employee.getProjectRole() == null ? null : employee.getProjectRole().getName())
+            .projectRole(ofNullable(staffEvaluationUser.getProjectRole()).map(ProjectRole::getName).orElse(null))
+            .projectRoleId(ofNullable(staffEvaluationUser.getProjectRole()).map(ProjectRole::getId).orElse(null))
             .projectId(projectId)
             .staffEvaluationId(staffEvaluation.getId())
             .verifiedBy(verifiedByOf(staffEvaluationUser))
@@ -167,6 +157,44 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
             .mismatchedAnswerCount(countVerifiedAnswers(answers, NO))
             .skills(skillGroups)
             .build();
+    }
+
+    private StaffEvaluationUser staffEvaluationUserOf(Long staffEvaluationId, Long employeeId, Long projectRoleId) {
+        if (isNull(staffEvaluationId)) {
+            return staffEvaluationUserRepository
+                .findLastByStatusForUserIdAndProjectRoleId(employeeId, projectRoleId, COMPLETED)
+                .orElseThrow(() -> errorOf(
+                    NOT_FOUND,
+                    messageSource.getMessage("error.staff-evaluation-not-found", new Object[]{}, getLocale()))
+                );
+        } else {
+            return staffEvaluationUserRepository
+                .findByStaffEvaluationIdAndUserIdAndProjectRoleId(staffEvaluationId, employeeId, projectRoleId)
+                .orElseThrow(() -> errorOf(
+                    NOT_FOUND,
+                    messageSource.getMessage("error.staff-evaluation-not-found", new Object[]{}, getLocale()))
+                );
+        }
+    }
+
+    private List<StaffEvaluationAnswer> answersOf(StaffEvaluationUser staffEvaluationUser) {
+        var positions = questionPositionMapOf(staffEvaluationUser).entrySet().stream()
+            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return staffEvaluationAnswerRepository.findByStaffEvaluationUserId(staffEvaluationUser.getId()).stream()
+            .sorted(comparingInt(answer -> positions.getOrDefault(answer.getQuestion().getId(), MAX_VALUE)))
+            .toList();
+    }
+
+    private static List<StaffEvaluationAnswer> projectAnswersOf(
+        List<AssessmentProjectQuestion> projectQuestions,
+        List<StaffEvaluationAnswer> answers
+    ) {
+        var questionIds = projectQuestions.stream()
+            .map(value -> value.getQuestion().getId())
+            .collect(toSet());
+        return answers.stream()
+            .filter(answer -> questionIds.contains(answer.getQuestion().getId()))
+            .toList();
     }
 
     private List<ManagerSkillAnswersDto> skillGroupsOf(List<AssessmentProjectQuestion> projectQuestions,
@@ -189,6 +217,35 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
         return skillGroups;
     }
 
+    private List<ManagerEmployeeDto> managerEmployeeDtoListOf(ManagerUserFilter filter,
+                                                              List<User> employees,
+                                                              AssessmentProjectContext context) {
+
+        var staffEvaluationUserMap = completedEvaluationsOf(filter).stream()
+            .collect(toMap(seu -> keyOf(seu.getUser(), seu.getProjectRole()), Function.identity()));
+
+        return employees.stream()
+            .flatMap(user ->
+                user.getProjectRoles().stream()
+                    .map(projectRole ->
+                        ofNullable(staffEvaluationUserMap.get(keyOf(user, projectRole)))
+                            .map(staffEvaluationUser ->
+                                dtoOf(user, projectRole,
+                                    calculateSkillLevelsForEmployee(user, staffEvaluationUser, context),
+                                    staffEvaluationUser
+                                ))
+                            .orElseGet(() -> dtoOf(user, projectRole, defaultSkillLevelsForEmployee(context)))
+                ))
+            .filter(managerEmployeeDto -> matchesCareerLevel(managerEmployeeDto, filter))
+            .filter(managerEmployeeDto -> matchesProjectRole(managerEmployeeDto, filter))
+            .sorted(comparing(ManagerEmployeeDto::lastName))
+            .toList();
+    }
+
+    private String keyOf(User user, ProjectRole projectRole) {
+        return "%d:%d".formatted(user.getId(), projectRole.getId());
+    }
+
     private List<StaffEvaluationUser> completedEvaluationsOf(ManagerUserFilter filter) {
         return filter.staffEvaluation() == null
             ? staffEvaluationUserRepository.findLastByStatusForAllUsers(COMPLETED)
@@ -201,11 +258,6 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
 
     private static String verifiedByOf(StaffEvaluationUser assignment) {
         return assignment.getVerifiedBy() != null ? assignment.getVerifiedBy().getDisplayName() : EMPTY;
-    }
-
-    private static int countPendingAnswers(List<StaffEvaluationAnswer> answers) {
-        return (int) answers.stream()
-            .filter(answer -> answer.getVerifiedResponse() == null).count();
     }
 
     private AssessmentProjectContext assessmentProjectContextOf(ManagerUserFilter filter) {
@@ -251,7 +303,11 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
 
     private static List<ManagerSkillLevelDto> defaultSkillLevelsForEmployee(AssessmentProjectContext context) {
         return context.activeSkills.stream()
-            .map(it -> ManagerSkillLevelDto.builder().skillId(it.getId()).skill(it.getName()).build()).toList();
+            .map(it -> ManagerSkillLevelDto.builder()
+                .skillId(it.getId())
+                .skill(it.getName())
+                .build())
+            .toList();
     }
 
     private List<ManagerSkillLevelDto> calculateSkillLevelsForEmployee(User user,
@@ -259,7 +315,8 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
                                                                        AssessmentProjectContext context
     ) {
         var yesQuestionIds = getYesQuestionIds(staffEvaluationUser);
-        var projectQuestion = context.projectQuestionMap.getOrDefault(user.getProjectRole(), new HashMap<>());
+        var projectQuestion = context.projectQuestionMap
+            .getOrDefault(staffEvaluationUser.getProjectRole(), new HashMap<>());
         return skillLevelsOf(projectQuestion, context.activeSkills(), yesQuestionIds);
     }
 
@@ -305,11 +362,19 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
         return result;
     }
 
-    private ManagerEmployeeDto dtoOf(User user, List<ManagerSkillLevelDto> skillLevels) {
-        return dtoOf(user, skillLevels, null);
+    private boolean matchesProjectRole(ManagerEmployeeDto user, ManagerUserFilter filter) {
+        var result = true;
+        if (filter.projectRole() != null) {
+            result = user.projectRoleId().equals(filter.projectRole());
+        }
+        return result;
     }
 
-    private ManagerEmployeeDto dtoOf(User user, List<ManagerSkillLevelDto> skillLevels,
+    private ManagerEmployeeDto dtoOf(User user, ProjectRole projectRole, List<ManagerSkillLevelDto> skillLevels) {
+        return dtoOf(user, projectRole, skillLevels, null);
+    }
+
+    private ManagerEmployeeDto dtoOf(User user, ProjectRole projectRole, List<ManagerSkillLevelDto> skillLevels,
                                      StaffEvaluationUser staffEvaluationUser) {
         return ManagerEmployeeDto.builder()
             .id(user.getId())
@@ -318,8 +383,9 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
             .firstName(user.getFirstName())
             .username(user.getUsername())
             .email(user.getEmail())
-            .projectRoleId(user.getProjectRole() == null ? null : user.getProjectRole().getId())
-            .projectRole(user.getProjectRole() == null ? null : user.getProjectRole().getName())
+            .projectRoleId(projectRole != null ? projectRole.getId() : null)
+            .projectRole(projectRole != null ? projectRole.getName() : null)
+            .projectRoleCode(projectRole != null ? projectRole.getCode() : null)
             .staffEvaluationId(staffEvaluationUser == null
                 ? null
                 : staffEvaluationUser.getStaffEvaluation().getId())
@@ -328,21 +394,18 @@ public class ManagerEmployeeServiceImpl implements ManagerEmployeeService {
     }
 
     private Map<Long, Integer> questionPositionMapOf(StaffEvaluationUser staffEvaluationUser) {
-        var projectRole = staffEvaluationUser.getUser().getProjectRole();
+        var projectRole = staffEvaluationUser.getProjectRole();
         if (projectRole == null) {
             return Map.of();
         }
         return staffEvaluationQuestionRepository
             .findByStaffEvaluationIdAndQuestionProjectRoleIdOrderByPositionAsc(
-                staffEvaluationUser.getStaffEvaluation().getId(), projectRole.getId())
-            .stream()
+                staffEvaluationUser.getStaffEvaluation().getId(), projectRole.getId()).stream()
             .collect(toMap(
                 question -> question.getQuestion().getId(),
                 StaffEvaluationQuestion::getPosition)
             );
     }
-
-
 
     private ManagerSkillAnswersDto skillAnswersOf(
         Skill skill,

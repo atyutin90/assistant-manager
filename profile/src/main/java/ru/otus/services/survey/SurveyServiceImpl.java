@@ -11,6 +11,7 @@ import ru.otus.dto.SurveyPageDto;
 import ru.otus.dto.SurveyQuestionDto;
 import ru.otus.entity.StaffEvaluationAnswer;
 import ru.otus.entity.Question;
+import ru.otus.entity.ProjectRole;
 import ru.otus.entity.StaffEvaluationQuestion;
 import ru.otus.entity.StaffEvaluationUser;
 import ru.otus.entity.enums.AnswerResponse;
@@ -87,14 +88,14 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     @Override
-    public void complete(Long staffEvaluationUserId, Long userId, String projectRole) {
-        var context = surveyContextOf(staffEvaluationUserId, projectRole, userId);
+    public void complete(Long staffEvaluationId, Long userId, String projectRole) {
+        var context = surveyContextOf(staffEvaluationId, projectRole, userId);
         finishSurvey(context);
     }
 
     @Override
-    public FeedbackFormDto findFeedback(Long evaluationId, Long userId) {
-        var staffEvaluationUser = activeStaffEvaluationUserOf(evaluationId, userId);
+    public FeedbackFormDto findFeedback(Long staffEvaluationUserId, Long userId) {
+        var staffEvaluationUser = activeStaffEvaluationUserById(staffEvaluationUserId, userId);
         checkFeedbackStatus(staffEvaluationUser);
         return FeedbackFormDto.builder()
             .message(staffEvaluationUser.getFeedbackMessage())
@@ -104,12 +105,12 @@ public class SurveyServiceImpl implements SurveyService {
     @Override
     @Transactional
     public void saveFeedback(
-        Long staffEvaluationId,
+        Long staffEvaluationUserId,
         Long userId,
         FeedbackFormDto feedback,
         boolean finish
     ) {
-        var staffEvaluationUser = activeStaffEvaluationUserOf(staffEvaluationId, userId);
+        var staffEvaluationUser = activeStaffEvaluationUserById(staffEvaluationUserId, userId);
         checkFeedbackStatus(staffEvaluationUser);
         staffEvaluationUser.setFeedbackMessage(feedback.message());
         if (finish) {
@@ -124,13 +125,17 @@ public class SurveyServiceImpl implements SurveyService {
         List<SurveyQuestionDto> questions,
         SurveyQuestionDto currentQuestion
     ) {
+        var questionIds = context.questions().stream()
+            .map(question -> question.getQuestion().getId())
+            .collect(java.util.stream.Collectors.toSet());
         var canFinish = context.staffEvaluationUser().getAnswers().stream()
             .filter(it -> it.getResponse() != null)
+            .filter(it -> questionIds.contains(it.getQuestion().getId()))
             .count() == questions.size();
         return SurveyPageDto.builder()
             .staffEvaluationId(evaluationId)
             .evaluationName(context.staffEvaluationUser().getStaffEvaluation().getName())
-            .projectRole(context.staffEvaluationUser().getUser().getProjectRole().getCode())
+            .projectRole(context.projectRole().getCode())
             .questions(questions)
             .currentQuestion(currentQuestion)
             .currentNumber(questions.indexOf(currentQuestion) + 1)
@@ -177,8 +182,8 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     private SurveyContext surveyContextOf(Long staffEvaluationId, String projectRole, Long userId) {
-        var staffEvaluationUser = activeStaffEvaluationUserOf(staffEvaluationId, userId);
-        var assignedRole = staffEvaluationUser.getUser().getProjectRole();
+        var staffEvaluationUser = activeStaffEvaluationUserOf(staffEvaluationId, userId, projectRole);
+        var assignedRole = staffEvaluationUser.getProjectRole();
         if (assignedRole == null || !assignedRole.getCode().equalsIgnoreCase(projectRole)) {
             throw errorOf(
                 NOT_FOUND,
@@ -188,18 +193,29 @@ public class SurveyServiceImpl implements SurveyService {
             .findByStaffEvaluationIdAndQuestionProjectRoleIdOrderByPositionAsc(staffEvaluationId, assignedRole.getId());
         return SurveyContext.builder()
             .staffEvaluationUser(staffEvaluationUser)
+            .projectRole(assignedRole)
             .questions(questions)
             .build();
     }
 
-    private StaffEvaluationUser activeStaffEvaluationUserOf(Long staffEvaluationId, Long userId) {
-        return staffEvaluationUserRepository.findByStaffEvaluationIdAndUserId(staffEvaluationId, userId)
+    private StaffEvaluationUser activeStaffEvaluationUserOf(Long staffEvaluationId, Long userId, String projectRole) {
+        return staffEvaluationUserRepository
+            .findByStaffEvaluationIdAndUserIdAndProjectRoleCodeIgnoreCase(staffEvaluationId, userId, projectRole)
             .filter(it -> ACTIVE.equals(it.getStaffEvaluation().getStatus()))
             .orElseThrow(() ->
                 errorOf(
                     NOT_FOUND,
                     messageSource.getMessage("error.staff-evaluation-not-found", new Object[]{}, getLocale()))
             );
+    }
+
+    private StaffEvaluationUser activeStaffEvaluationUserById(Long staffEvaluationUserId, Long userId) {
+        return staffEvaluationUserRepository.findByIdAndUserId(staffEvaluationUserId, userId)
+            .filter(it -> ACTIVE.equals(it.getStaffEvaluation().getStatus()))
+            .orElseThrow(() -> errorOf(
+                NOT_FOUND,
+                messageSource.getMessage("error.staff-evaluation-not-found", new Object[]{}, getLocale())
+            ));
     }
 
     private Map<Long, StaffEvaluationAnswer> answerMapOf(StaffEvaluationUser staffEvaluationUserId) {
@@ -272,6 +288,7 @@ public class SurveyServiceImpl implements SurveyService {
     @Builder
     private record SurveyContext(
         StaffEvaluationUser staffEvaluationUser,
+        ProjectRole projectRole,
         List<StaffEvaluationQuestion> questions
     ) {
     }

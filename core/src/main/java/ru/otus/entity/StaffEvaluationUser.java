@@ -41,7 +41,8 @@ import static ru.otus.entity.enums.StaffEvaluationUserStatus.NEW;
     name = STAFF_EVALUATION_USER_GRAPH,
     attributeNodes = {
         @NamedAttributeNode("user"),
-        @NamedAttributeNode("staffEvaluation")
+        @NamedAttributeNode("staffEvaluation"),
+        @NamedAttributeNode("projectRole")
     }
 )
 @NamedEntityGraph(
@@ -49,6 +50,7 @@ import static ru.otus.entity.enums.StaffEvaluationUserStatus.NEW;
     attributeNodes = {
         @NamedAttributeNode("user"),
         @NamedAttributeNode("staffEvaluation"),
+        @NamedAttributeNode("projectRole"),
         @NamedAttributeNode("answers"),
         @NamedAttributeNode("verifiedBy")
     }
@@ -70,6 +72,10 @@ public class StaffEvaluationUser {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_role_id")
+    private ProjectRole projectRole;
 
     @Builder.Default
     @OneToMany(mappedBy = "staffEvaluationUser", cascade = ALL, orphanRemoval = true, fetch = FetchType.LAZY)

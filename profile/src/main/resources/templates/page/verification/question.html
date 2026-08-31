@@ -16,6 +16,7 @@
                     <span class="fw-semibold" th:text="${verification.employeeName}">Employee</span>
                     <span class="text-muted" th:text="|(${verification.employeeUsername})|">(username)</span>
                 </div>
+                <span class="badge text-bg-secondary mb-1" th:text="${verification.projectRole ?: '—'}">Role</span>
                 <div class="text-muted">
                     <i class="far fa-calendar me-1"></i>
                     <span th:text="${#temporals.format(verification.dateFrom, 'dd.MM.yyyy')}">01.01.2026</span>

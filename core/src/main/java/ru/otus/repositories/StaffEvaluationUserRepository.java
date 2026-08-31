@@ -45,6 +45,7 @@ public interface StaffEvaluationUserRepository extends JpaRepository<StaffEvalua
               select max(last.id)
               from StaffEvaluationUser last
               where last.user.id = seu.user.id
+                and last.projectRole.id = seu.projectRole.id
                 and last.status = :status
           )
         """)
@@ -63,8 +64,36 @@ public interface StaffEvaluationUserRepository extends JpaRepository<StaffEvalua
         StaffEvaluationStatus status
     );
 
+    @Query("""
+        select seu
+        from StaffEvaluationUser seu
+        where seu.id = (
+              select max(last.id)
+              from StaffEvaluationUser last
+              where last.user.id = :userId
+                and last.projectRole.id = :projectRoleId
+                and last.status = :status
+          )
+        """)
     @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
-    Optional<StaffEvaluationUser> findByStaffEvaluationIdAndUserId(Long staffEvaluationId, Long userId);
+    Optional<StaffEvaluationUser> findLastByStatusForUserIdAndProjectRoleId(Long userId,
+                                                                            Long projectRoleId,
+                                                                            StaffEvaluationUserStatus status);
+
+    @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
+    Optional<StaffEvaluationUser> findByStaffEvaluationIdAndUserIdAndProjectRoleId(Long staffEvaluationId,
+                                                                                   Long userId,
+                                                                                   Long projectRoleId);
+
+    @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
+    Optional<StaffEvaluationUser> findByStaffEvaluationIdAndUserIdAndProjectRoleCodeIgnoreCase(
+        Long staffEvaluationId,
+        Long userId,
+        String projectRole
+    );
+
+    @EntityGraph(value = STAFF_EVALUATION_USER_ALL_GRAPH)
+    Optional<StaffEvaluationUser> findByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(value = STAFF_EVALUATION_USER_GRAPH)
     Page<StaffEvaluationUser> findByUserResponsibleIdAndStatus(

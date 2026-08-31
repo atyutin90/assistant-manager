@@ -60,7 +60,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             .firstName(userDto.firstName())
             .username(userDto.username())
             .email(userDto.email())
-            .projectRole(userDto.projectRole())
+            .projectRoles(userDto.projectRoles())
             .currentLevel(userDto.currentLevel())
             .laborCodePosition(userDto.laborCodePosition())
             .responsibleId(userDto.responsibleId())

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.otus.dto.filter.StaffEvaluationUserFilter;
 import ru.otus.entity.enums.StaffEvaluationUserStatus;
+import ru.otus.services.ProjectRoleService;
 import ru.otus.services.ValueListService;
 import ru.otus.services.staffevaluation.StaffEvaluationService;
 import ru.otus.services.staffevaluationuser.StaffEvaluationServiceUser;
@@ -29,6 +30,8 @@ public class StaffEvaluationStatisticsPageController implements AbstractPageCont
     private final StaffEvaluationService staffEvaluationService;
 
     private final StaffEvaluationServiceUser staffEvaluationServiceUser;
+
+    private final ProjectRoleService projectRoleService;
 
     private final ValueListService valueListService;
 
@@ -50,6 +53,7 @@ public class StaffEvaluationStatisticsPageController implements AbstractPageCont
         var statuses = valueListService.getValues(STAFF_EVALUATION_USER_STATUS);
         model.addAttribute(STAFF_EVALUATION, staffEvaluationService.findById(id));
         model.addAttribute(STATISTICS, statistics);
+        model.addAttribute(PROJECT_ROLES, projectRoleService.findAllValues());
         model.addAttribute(STATUSES, statuses);
         model.addAttribute(FILTER, filter);
         model.addAttribute(SOURCE, "/staff-evaluations/%d/statistics".formatted(id));

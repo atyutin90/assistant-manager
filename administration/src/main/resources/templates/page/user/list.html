@@ -91,17 +91,19 @@
                 <td th:text="${user.middleName}">MiddleName</td>
                 <td th:text="${user.username}">Username</td>
                 <td>
-                    <span class="badge text-bg-secondary"
+                    <span class="badge text-bg-secondary me-1"
                           th:each="userRole : ${userRoles}"
                           th:if="${user.userRoles != null ? #lists.contains(user.userRoles, userRole.code()) : false}"
                           th:text="${userRole.value()}">
                     </span>
                 </td>
-                <td th:each="projectRole : ${projectRoles}"
-                    th:if="${projectRole.id == user.projectRole}"
-                    th:text="${projectRole.value}">Project role</td>
-                <td th:if="${user.projectRole == null}"
-                    th:text="''">Project role</td>
+                <td>
+                    <span class="badge text-bg-secondary me-1"
+                          th:each="projectRole : ${projectRoles}"
+                          th:if="${user.projectRoles != null && #sets.contains(user.projectRoles, projectRole.id)}"
+                          th:text="${projectRole.value}">Project role</span>
+                    <span th:if="${user.projectRoles == null || user.projectRoles.isEmpty()}" class="text-muted">&mdash;</span>
+                </td>
                 <td>
                     <div class="btn-group flex-nowrap" role="group">
                         <a class="btn btn-outline-primary btn-sm"

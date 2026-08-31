@@ -11,6 +11,7 @@ public record ManagerEmployeeDetailsDto(
     String username,
     String email,
     String projectRole,
+    Long projectRoleId,
     Long projectId,
     Long staffEvaluationId,
     String verifiedBy,

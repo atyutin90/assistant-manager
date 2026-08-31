@@ -20,6 +20,7 @@
             <tr>
                 <th scope="col" th:text="#{verification.employee}">Employee</th>
                 <th scope="col" th:text="#{staff-evaluation.name}">Evaluation</th>
+                <th scope="col" th:text="#{employee.project-role}">Project role</th>
                 <th scope="col" th:text="#{staff-evaluation.date-from}">Date from</th>
                 <th scope="col" th:text="#{staff-evaluation.date-to}">Date to</th>
                 <th scope="col" th:text="#{actions}">Actions</th>
@@ -27,7 +28,7 @@
             </thead>
             <tbody>
             <tr th:if="${verifications.isEmpty()}">
-                <td colspan="5" class="text-center text-muted py-4" th:text="#{verification.empty}">
+                <td colspan="6" class="text-center text-muted py-4" th:text="#{verification.empty}">
                     No surveys are awaiting verification
                 </td>
             </tr>
@@ -37,6 +38,7 @@
                     <div class="small text-muted" th:text="${verification.employeeUsername}">username</div>
                 </td>
                 <td th:text="${verification.name}">Evaluation</td>
+                <td><span class="badge text-bg-secondary" th:text="${verification.projectRole ?: '—'}">Role</span></td>
                 <td th:text="${#temporals.format(verification.dateFrom, 'dd.MM.yyyy')}">01.01.2026</td>
                 <td th:text="${#temporals.format(verification.dateTo, 'dd.MM.yyyy')}">31.01.2026</td>
                 <td>

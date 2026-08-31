@@ -17,7 +17,7 @@
                 </p>
 
                 <form method="post"
-                      th:action="@{/survey/{staffEvaluationId}/feedback(staffEvaluationId=${staffEvaluationId})}"
+              th:action="@{/survey/{staffEvaluationUserId}/feedback(staffEvaluationUserId=${staffEvaluationUserId})}"
                       th:object="${feedback}">
                     <div class="mb-4">
                         <textarea class="form-control"

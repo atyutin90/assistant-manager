@@ -11,13 +11,13 @@ public class EmployeeDtoConverter {
         User user = data.getUser();
         if (user != null) {
             result = EmployeeDto.builder()
-                .id(user.getId())
+                .id(data.getId())
                 .lastName(user.getLastName())
                 .middleName(user.getMiddleName())
                 .firstName(user.getFirstName())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .projectRole(user.getProjectRole() != null ? user.getProjectRole().getId() : null)
+                .projectRole(data.getProjectRole() != null ? data.getProjectRole().getId() : null)
                 .currentLevel(user.getCurrentLevel() != null ? user.getCurrentLevel().getId() : null)
                 .laborCodePosition(user.getLaborCodePosition())
                 .responsible(user.getResponsible() != null ? user.getResponsible().getDisplayName() : null)

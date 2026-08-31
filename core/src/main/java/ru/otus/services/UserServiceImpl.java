@@ -124,9 +124,9 @@ public class UserServiceImpl implements UserService {
             .firstName(data.firstName())
             .username(data.username())
             .email(data.email())
-            .projectRole(
-                ofNullable(data.projectRole()).map(it -> ProjectRole.builder().id(it).build()).orElse(null)
-            )
+            .projectRoles(ofNullable(data.projectRoles()).orElseGet(Set::of).stream()
+                .map(it -> ProjectRole.builder().id(it).build())
+                .collect(toSet()))
             .currentLevel(
                 ofNullable(data.currentLevel()).map(it -> CareerLevel.builder().id(it).build()).orElse(null)
             )

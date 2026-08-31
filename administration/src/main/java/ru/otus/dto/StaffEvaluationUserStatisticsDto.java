@@ -10,6 +10,7 @@ public record StaffEvaluationUserStatisticsDto(
     String middleName,
     String firstName,
     String username,
+    Long projectRoleId,
     StaffEvaluationUserStatus status
 ) {
 }

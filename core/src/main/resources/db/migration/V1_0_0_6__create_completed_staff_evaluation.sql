@@ -22,12 +22,14 @@ INSERT INTO staff_evaluation_user(
     feedback_message,
     staff_evaluation_id,
     user_id,
+    project_role_id,
     status,
     verified_by
 )
 SELECT 'Ответы на вопросы заполнены и переданы ответственному на проверку.',
        staff_evaluation.id,
        employee.id,
+       user_project_role.project_role_id,
        'COMPLETED',
        responsible.id
 FROM (VALUES
@@ -39,6 +41,7 @@ FROM (VALUES
     ('qa1', 'qa2')
 ) AS assignments(employee_username, responsible_username)
 JOIN users AS employee ON employee.username = assignments.employee_username
+JOIN user_project_role as user_project_role  ON employee.id = user_project_role.user_id
 JOIN users AS responsible ON responsible.username = assignments.responsible_username
 CROSS JOIN staff_evaluation
 WHERE staff_evaluation.name = 'Комплексная оценка по всем проектным ролям';
@@ -56,7 +59,7 @@ WITH answers AS (
     JOIN users
         ON users.id = staff_evaluation_user.user_id
     JOIN question
-        ON question.project_role_id = users.project_role_id
+        ON question.project_role_id = staff_evaluation_user.project_role_id
     WHERE staff_evaluation.name = 'Комплексная оценка по всем проектным ролям'
       AND question.uuid LIKE 'seed-%'
 )

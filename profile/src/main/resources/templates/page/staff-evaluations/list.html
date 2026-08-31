@@ -21,13 +21,14 @@
                 <th scope="col" th:text="#{staff-evaluation.name}">Name</th>
                 <th scope="col" th:text="#{staff-evaluation.date-from}">Date from</th>
                 <th scope="col" th:text="#{staff-evaluation.date-to}">Date to</th>
+                <th scope="col" th:text="#{employee.project-role}">Project role</th>
                 <th scope="col" th:text="#{staff-evaluation.staff-evaluation-user-status}">Survey status</th>
                 <th scope="col" th:text="#{actions}">Actions</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${staffEvaluations.isEmpty()}">
-                <td colspan="5" class="text-center text-muted py-4" th:text="#{staff-evaluations.assigned-empty}">
+                <td colspan="6" class="text-center text-muted py-4" th:text="#{staff-evaluations.assigned-empty}">
                     No assigned evaluations
                 </td>
             </tr>
@@ -35,6 +36,7 @@
                 <td th:text="${staffEvaluation.name}">Evaluation</td>
                 <td th:text="${#temporals.format(staffEvaluation.dateFrom, 'dd.MM.yyyy')}">01.01.2026</td>
                 <td th:text="${#temporals.format(staffEvaluation.dateTo, 'dd.MM.yyyy')}">31.01.2026</td>
+                <td><span class="badge text-bg-secondary" th:text="${staffEvaluation.projectRole ?: '—'}">Role</span></td>
                 <td>
                     <span class="badge"
                           th:classappend="${staffEvaluation.staffEvaluationUserStatus.name() == 'VERIFICATION'
@@ -48,20 +50,20 @@
                 </td>
                 <td>
                     <a class="btn btn-secondary btn-sm"
-                       th:if="${staffEvaluation.staffEvaluationStatus.name() == 'ACTIVE' && (staffEvaluation.staffEvaluationUserStatus.name() == 'NEW' || staffEvaluation.staffEvaluationUserStatus.name() == 'IN_PROGRESS') && staffEvaluation.projectRole != null}"
-                       th:href="@{/survey/{evaluationId}/{role}(evaluationId=${staffEvaluation.staffEvaluationId}, role=${staffEvaluation.projectRole})}"
+                       th:if="${staffEvaluation.staffEvaluationStatus.name() == 'ACTIVE' && (staffEvaluation.staffEvaluationUserStatus.name() == 'NEW' || staffEvaluation.staffEvaluationUserStatus.name() == 'IN_PROGRESS') && staffEvaluation.projectRoleCode() != null}"
+                       th:href="@{/survey/{evaluationId}/{role}(evaluationId=${staffEvaluation.staffEvaluationId}, role=${staffEvaluation.projectRoleCode()})}"
                        th:title="#{survey.start-or-continue}">
                         <i class="fas fa-arrow-right"></i>
                     </a>
                     <a class="btn btn-outline-success btn-sm"
                        th:if="${staffEvaluation.staffEvaluationStatus.name() == 'ACTIVE' && staffEvaluation.staffEvaluationUserStatus.name() == 'FEEDBACK'}"
-                       th:href="@{/survey/{evaluationId}/feedback(evaluationId=${staffEvaluation.staffEvaluationId})}"
+                       th:href="@{/survey/{assignmentId}/feedback(assignmentId=${staffEvaluation.staffEvaluationUserId})}"
                        th:title="#{feedback.leave}">
                         <i class="fas fa-flag-checkered"></i>
                     </a>
                     <a class="btn btn-outline-primary btn-sm"
                        th:if="${staffEvaluation.staffEvaluationUserStatus.name() == 'VERIFICATION' || staffEvaluation.staffEvaluationUserStatus.name() == 'COMPLETED'}"
-                       th:href="@{/staff-evaluations/{id}/detail(id=${staffEvaluation.staffEvaluationId})}"
+                       th:href="@{/staff-evaluations/{id}/detail(id=${staffEvaluation.staffEvaluationUserId})}"
                        th:title="#{staff-evaluation-results.open}">
                         <i class="fas fa-chart-column"></i>
                     </a>

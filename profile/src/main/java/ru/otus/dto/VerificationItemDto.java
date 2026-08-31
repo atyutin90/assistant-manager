@@ -14,6 +14,7 @@ public record VerificationItemDto(
     LocalDate dateTo,
     String employeeName,
     String employeeUsername,
+    String projectRole,
     StaffEvaluationStatus staffEvaluationStatus,
     StaffEvaluationUserStatus staffEvaluationUserStatus
 ) {

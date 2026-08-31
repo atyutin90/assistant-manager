@@ -8,5 +8,5 @@ public interface ManagerStaffEvaluationService {
 
     List<ManagerStaffEvaluationDto> findAll();
 
-    List<ManagerStaffEvaluationDto> findAllByEmployeeId(Long employeeId);
+    List<ManagerStaffEvaluationDto> findAllByEmployeeIdAndProjectRoleId(Long employeeId, Long projectRoleId);
 }

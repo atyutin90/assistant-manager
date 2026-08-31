@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static ru.otus.entity.User.USER_GRAPH;
 import static ru.otus.entity.User.USER_ALL_GRAPH;
+import static ru.otus.entity.User.USER_GRAPH;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {

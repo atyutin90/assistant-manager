@@ -12,9 +12,9 @@ public interface SurveyService {
 
     void saveAnswer(SurveyAnswerCommand command);
 
-    void complete(Long staffEvaluationUserId, Long userId, String projectRole);
+    void complete(Long staffEvaluationId, Long userId, String projectRole);
 
-    FeedbackFormDto findFeedback(Long staffEvaluationId, Long userId);
+    FeedbackFormDto findFeedback(Long staffEvaluationUserId, Long userId);
 
-    void saveFeedback(Long staffEvaluationId, Long userId, FeedbackFormDto feedback, boolean finish);
+    void saveFeedback(Long staffEvaluationUserId, Long userId, FeedbackFormDto feedback, boolean finish);
 }

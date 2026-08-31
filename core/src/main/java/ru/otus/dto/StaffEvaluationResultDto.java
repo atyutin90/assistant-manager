@@ -13,6 +13,7 @@ public record StaffEvaluationResultDto(
     LocalDate dateFrom,
     LocalDate dateTo,
     StaffEvaluationUserStatus status,
+    String projectRole,
     String verifiedBy,
     int verifiedAnswers,
     int matchedAnswers,

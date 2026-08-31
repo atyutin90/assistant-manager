@@ -66,6 +66,8 @@ public class VerificationServiceImpl implements VerificationService {
             .dateTo(staffEvaluation.getDateTo())
             .employeeName(staffEvaluationUser.getUser().getDisplayName())
             .employeeUsername(staffEvaluationUser.getUser().getUsername())
+            .projectRole(staffEvaluationUser.getProjectRole() != null
+                ? staffEvaluationUser.getProjectRole().getName() : null)
             .feedback(staffEvaluationUser.getFeedbackMessage())
             .questions(questionsOf(answers, positions))
             .verifiedQuestionsCount(verifiedQuestionCount)
@@ -152,15 +154,13 @@ public class VerificationServiceImpl implements VerificationService {
     }
 
     private Map<Long, Integer> questionPositionMapOf(StaffEvaluationUser staffEvaluationUser) {
-        var projectRole = staffEvaluationUser.getUser().getProjectRole();
+        var projectRole = staffEvaluationUser.getProjectRole();
         if (projectRole == null) {
             return Map.of();
         }
         return staffEvaluationQuestionRepository
             .findByStaffEvaluationIdAndQuestionProjectRoleIdOrderByPositionAsc(
-                staffEvaluationUser.getStaffEvaluation().getId(),
-                projectRole.getId()
-            ).stream()
+                staffEvaluationUser.getStaffEvaluation().getId(), projectRole.getId()).stream()
             .collect(toMap(question -> question.getQuestion().getId(), StaffEvaluationQuestion::getPosition));
     }
 
@@ -173,6 +173,7 @@ public class VerificationServiceImpl implements VerificationService {
             .dateTo(staffEvaluation.getDateTo())
             .employeeName(assignment.getUser().getDisplayName())
             .employeeUsername(assignment.getUser().getUsername())
+            .projectRole(assignment.getProjectRole() != null ? assignment.getProjectRole().getName() : null)
             .staffEvaluationStatus(staffEvaluation.getStatus())
             .staffEvaluationUserStatus(assignment.getStatus())
             .build();

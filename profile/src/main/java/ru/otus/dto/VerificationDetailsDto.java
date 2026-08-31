@@ -13,6 +13,7 @@ public record VerificationDetailsDto(
     LocalDate dateTo,
     String employeeName,
     String employeeUsername,
+    String projectRole,
     String feedback,
     List<VerificationQuestionDto> questions,
     Integer verifiedQuestionsCount,

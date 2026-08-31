@@ -19,7 +19,7 @@ public record CurrentUser(
 
     String password,
 
-    Long projectRole,
+    Set<Long> projectRoles,
 
     //Текущий КУ
     Long currentLevel,

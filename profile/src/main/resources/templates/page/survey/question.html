@@ -131,7 +131,7 @@
 <div th:replace="~{fragments/confirmation-modal :: confirmationModal(
     ${survey.canFinish},
     'finish-survey-modal',
-    '/survey/' + ${staffEvaluationId} + '/'+ ${projectRole} +'/complete',
+    '/survey/' + ${survey.staffEvaluationId} + '/' + ${survey.projectRole} + '/complete',
     #{survey.finish-title},
     #{survey.finish-confirm},
     'btn-outline-success')

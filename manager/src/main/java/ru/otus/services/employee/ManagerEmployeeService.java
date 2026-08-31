@@ -10,5 +10,9 @@ public interface ManagerEmployeeService {
 
     List<ManagerEmployeeDto> findAll(ManagerUserFilter filter);
 
-    ManagerEmployeeDetailsDto findDetails(Long employeeId, Long staffEvaluationId, Long projectId, Long managerId);
+    ManagerEmployeeDetailsDto findDetails(Long employeeId,
+                                          Long staffEvaluationId,
+                                          Long projectId,
+                                          Long managerId,
+                                          Long projectRoleId);
 }

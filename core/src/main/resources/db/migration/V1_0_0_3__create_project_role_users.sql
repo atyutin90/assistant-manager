@@ -7,8 +7,7 @@ INSERT INTO users(
     username,
     email,
     labor_code_position,
-    current_level_id,
-    project_role_id
+    current_level_id
 )
 SELECT source.first_name,
        source.last_name,
@@ -17,8 +16,7 @@ SELECT source.first_name,
        source.username,
        source.email,
        source.labor_code_position,
-       career_level.id,
-       project_role.id
+       career_level.id
 FROM (VALUES
     ('Алексей', 'Аналитиков', 'Игоревич', 'analyst1', 'analyst1@example.com', 'Системный аналитик', 'JUNIOR', 'ANALYST'),
     ('Мария', 'Требования', 'Олеговна', 'analyst2', 'analyst2@example.com', 'Бизнес-аналитик', 'MIDDLE', 'ANALYST'),
@@ -75,6 +73,23 @@ INSERT INTO user_role(user_id, role)
 SELECT users.id, 'MANAGER'
 FROM users
 WHERE users.username IN ('manager1', 'manager2');
+
+INSERT INTO user_project_role(user_id, project_role_id)
+SELECT users.id, project_role.id
+FROM
+    (VALUES ('analyst1', 'ANALYST'),
+            ('analyst2', 'ANALYST'),
+            ('backend1', 'BE'),
+            ('backend2', 'BE'),
+            ('devops1', 'DEVOPS'),
+            ('devops2', 'DEVOPS'),
+            ('frontend1', 'FE'),
+            ('frontend2', 'FE'),
+            ('autoqa1', 'LOAD_QA'),
+            ('autoqa2', 'LOAD_QA'),
+            ('qa1', 'QA'),
+            ('qa2', 'QA')) AS data(username, project_role_code), users, project_role
+WHERE data.username = users.username AND project_role.code = data.project_role_code;
 
 UPDATE users AS employee
 SET responsible_id = responsible.id

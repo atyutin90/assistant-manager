@@ -30,7 +30,7 @@ public record UserDto(
 
     String password,
 
-    Long projectRole,
+    Set<Long> projectRoles,
 
     //Текущий КУ
     Long currentLevel,

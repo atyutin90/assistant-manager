@@ -30,8 +30,8 @@ public class CsvUserDto {
     @CsvBindByName(column = "first-name", required = true)
     private String firstName;
 
-    @CsvBindByName(column = "project-role")
-    private String projectRole;
+    @CsvBindAndSplitByName(column = "project-role", elementType = String.class)
+    private Set<String> projectRoles;
 
     @CsvBindByName(column = "current-level")
     private String currentLevel;

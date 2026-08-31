@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
@@ -208,13 +209,25 @@ public class CsvServiceImpl implements CsvService {
             .lastName(user.getLastName())
             .middleName(user.getMiddleName())
             .firstName(user.getFirstName())
-            .projectRole(user.getProjectRole() != null ? user.getProjectRole().getCode() : null)
+            .projectRoles(projectRoleCodesOf(user))
             .currentLevel(user.getCurrentLevel() != null ? user.getCurrentLevel().getCode() : null)
             .laborCodePosition(user.getLaborCodePosition())
-            .userRoles(isNotEmpty(user.getRoles()) ? user.getRoles().stream().map(Enum::name).collect(toSet()) : null)
+            .userRoles(userRoleNamesOf(user))
             .email(user.getEmail())
             .responsibleUsername(user.getResponsible() != null ? user.getResponsible().getUsername() : null)
             .build();
+    }
+
+    private static Set<String> userRoleNamesOf(User user) {
+        return isNotEmpty(user.getRoles()) ? user.getRoles().stream().map(Enum::name).collect(toSet()) : null;
+    }
+
+    private static Set<String> projectRoleCodesOf(User user) {
+        return isNotEmpty(user.getProjectRoles()) ?
+            user.getProjectRoles().stream()
+                .map(ProjectRole::getCode)
+                .collect(toSet()) :
+            null;
     }
 
     private User userOf(CsvUserDto csvUserDto) {
@@ -223,7 +236,7 @@ public class CsvServiceImpl implements CsvService {
             .lastName(csvUserDto.getLastName())
             .middleName(csvUserDto.getMiddleName())
             .firstName(csvUserDto.getFirstName())
-            .projectRole(projectRoleOf(csvUserDto.getProjectRole()))
+            .projectRoles(projectRolesOf(csvUserDto.getProjectRoles()))
             .currentLevel(careerLevelOf(csvUserDto.getCurrentLevel()))
             .laborCodePosition(csvUserDto.getLaborCodePosition())
             .email(csvUserDto.getEmail())
@@ -285,6 +298,15 @@ public class CsvServiceImpl implements CsvService {
 
     private ProjectRole projectRoleOf(String code) {
         return projectRoleRepository.findByCodeIgnoreCase(code).orElse(null);
+    }
+
+    private Set<ProjectRole> projectRolesOf(Set<String> codes) {
+        return isNotEmpty(codes) ?
+            codes.stream()
+                .map(this::projectRoleOf)
+                .filter(Objects::nonNull)
+                .collect(toSet()) :
+            Set.of();
     }
 
     private Skill skillOf(String code) {
