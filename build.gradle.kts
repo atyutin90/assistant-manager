@@ -21,7 +21,7 @@ subprojects {
     apply(plugin = "checkstyle")
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
+            languageVersion.set(JavaLanguageVersion.of(25))
         }
     }
     checkstyle {

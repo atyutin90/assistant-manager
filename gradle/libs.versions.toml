@@ -1,13 +1,16 @@
 [versions]
-spring-boot = "3.5.14"
+spring-boot = "4.1.1"
 spring-dependency-management = "1.1.7"
 checkstyle = "10.12.4"
 jjwt = "0.11.5"
 opencsv = "5.12.0"
 commons-io = "2.22.0"
 commons-lang3 = "3.20.0"
-commons-collections4="4.5.0"
+commons-collections4 = "4.5.0"
 reflections = "0.10.2"
+postgres = "42.7.13"
+flyway = "12.4.0"
+h2 = "2.4.240"
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
@@ -17,6 +20,24 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-kafka = { module = "org.springframework.boot:spring-boot-starter-kafka" }
+spring-boot-starter-mail= { module = "org.springframework.boot:spring-boot-starter-mail" }
+spring-boot-starter-flyway= { module = "org.springframework.boot:spring-boot-starter-flyway" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+thymeleaf-extras-springsecurity6 = { module = "org.thymeleaf.extras:thymeleaf-extras-springsecurity6" }
+
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
+spring-boot-starter-security-test = { module = "org.springframework.boot:spring-boot-starter-security-test" }
+spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test" }
+
+lombok = { module = "org.projectlombok:lombok" }
 #https://mvnrepository.com/artifact/com.opencsv/opencsv
 opencsv = { module = "com.opencsv:opencsv", version.ref = "opencsv" }
 #Используем, чтобы решить проблему с uFEFF при загрузке файла
@@ -25,3 +46,7 @@ commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 commons-collections4 = { module = "org.apache.commons:commons-collections4", version.ref = "commons-collections4" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway"}
+flyway-database-postgresql= { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway"}
+h2= { module = "com.h2database:h2", version.ref = "h2"}
