@@ -11,6 +11,7 @@ import ru.otus.entity.Question;
 
 import javax.annotation.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static ru.otus.entity.Question.QUESTION_GRAPH;
@@ -21,6 +22,9 @@ public interface QuestionRepository extends JpaRepository<Question, Long>, JpaSp
     @EntityGraph(value = QUESTION_GRAPH)
     @Override
     Page<Question> findAll(@Nullable Specification<Question> spec, Pageable pageable);
+
+    @EntityGraph(value = QUESTION_GRAPH)
+    List<Question> findAllByOrderByIdAsc();
 
     @EntityGraph(value = QUESTION_GRAPH)
     @Override

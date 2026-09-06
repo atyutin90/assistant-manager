@@ -1,0 +1,13 @@
+model_list:
+  - model_name: "deepseek/deepseek-v4-flash"
+    litellm_params:
+      model: "deepseek/deepseek-v4-flash"
+      configurable_clientside_auth_params: ["api_key"]
+  - model_name: "deepseek/deepseek-v4-pro"
+    litellm_params:
+      model: "deepseek/deepseek-v4-pro"
+      configurable_clientside_auth_params: ["api_key"]
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/LITELLM_DATABASE_URL

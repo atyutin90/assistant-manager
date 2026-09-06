@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.ViewResolver;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Configuration
 public class BaseSecurityConfiguration {
@@ -101,8 +103,17 @@ public class BaseSecurityConfiguration {
         HandlerExceptionResolver exceptionResolver,
         ViewResolver viewResolver
     ) {
-        exceptions.accessDeniedHandler((req, res, ex) ->
-            handleAccessDenied(req, res, ex, exceptionResolver, viewResolver));
+        exceptions.defaultAuthenticationEntryPointFor(
+            new HttpStatusEntryPoint(UNAUTHORIZED),
+            request -> request.getRequestURI().startsWith("/api/")
+        );
+        exceptions.accessDeniedHandler((req, res, ex) -> {
+            if (req.getRequestURI().startsWith("/api/")) {
+                res.sendError(FORBIDDEN.value());
+            } else {
+                handleAccessDenied(req, res, ex, exceptionResolver, viewResolver);
+            }
+        });
     }
 
     private static void handleAccessDenied(HttpServletRequest request,

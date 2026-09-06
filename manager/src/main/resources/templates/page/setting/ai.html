@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/manager-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/manager-header :: manager-header}"></div>
+
+<main class="container py-4 flex-grow-1">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <h1 class="h4 mb-3" th:text="#{ai-setting.title}">AI settings</h1>
+
+            <div th:replace="~{fragments/success-operation-message :: infoMessage(${successOperation}, #{ai-setting.saved})}"></div>
+            <div th:replace="~{fragments/success-operation-message :: infoMessage(${successDeleteOperation}, #{ai-setting.deleted})}"></div>
+
+            <form class="card border-0 shadow-sm" method="post" th:action="@{/settings/ai}" th:object="${settings}">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="provider" th:text="#{ai-setting.provider}">Provider</label>
+                        <select class="form-select" id="provider" th:field="*{provider}"
+                                th:classappend="${#fields.hasErrors('provider')} ? 'is-invalid'">
+                            <option value="" th:text="#{ai-setting.provider.select}">Select a provider</option>
+                            <option th:each="availableProvider : ${providers}"
+                                    th:value="${availableProvider.id}"
+                                    th:text="${availableProvider.displayName}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{provider}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="model" th:text="#{ai-setting.model}">Model</label>
+                        <select class="form-select"
+                                id="model"
+                                th:field="*{model}"
+                                th:classappend="${#fields.hasErrors('model')} ? 'is-invalid'">
+                            <option value="" th:text="#{ai-setting.model.select}">Select a model</option>
+                            <option th:each="availableModel : ${models}"
+                                    th:value="${availableModel.id}"
+                                    th:data-provider="${availableModel.provider}"
+                                    th:text="${availableModel.displayName}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{model}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="apiKey" th:text="#{ai-setting.api-key}">Provider API key</label>
+                        <input class="form-control" id="apiKey" type="password" autocomplete="new-password"
+                               th:field="*{apiKey}"
+                               th:classappend="${#fields.hasErrors('apiKey')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{apiKey}"></div>
+                        <div class="form-text" th:if="*{apiKeyConfigured}" th:text="#{ai-setting.api-key.keep}">
+                            A key is configured. Leave this field empty to keep it.
+                        </div>
+                        <div class="form-text" th:unless="*{apiKeyConfigured}" th:text="#{ai-setting.api-key.hint}">
+                            Use the API key issued by the selected provider.
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white d-flex justify-content-center gap-2">
+                    <button type="submit"
+                            class="btn btn-outline-success btn-sm"
+                            th:title="#{save}"
+                            th:aria-label="#{save}">
+                        <i class="fas fa-save"></i>
+                    </button>
+                    <button th:if="${canDelete}"
+                            type="button"
+                            class="btn btn-outline-danger btn-sm"
+                            th:title="#{delete}"
+                            data-bs-toggle="modal"
+                            data-bs-target="#delete-modal"
+                            th:aria-label="#{delete}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/delete-modal :: deleteModal(
+    ${canDelete},
+    '/settings/ai',
+    #{ai-setting.delete-title},
+    #{ai-setting.delete-confirm}
+)}"></div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+    (() => {
+        const provider = document.getElementById('provider');
+        const model = document.getElementById('model');
+        const options = Array.from(model.querySelectorAll('option[data-provider]'));
+
+        const filterModels = () => {
+            const selectedProvider = provider.value;
+            options.forEach(option => {
+                option.hidden = Boolean(selectedProvider) && option.dataset.provider !== selectedProvider || !Boolean(selectedProvider);
+            });
+            const selected = model.options[model.selectedIndex];
+            if (selected && selected.hidden) {
+                model.value = '';
+            }
+        };
+
+        provider.addEventListener('change', filterModels);
+        filterModels();
+    })();
+</script>
+</body>
+</html>

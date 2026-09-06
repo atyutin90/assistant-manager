@@ -28,10 +28,25 @@
                         Employees
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/employees/ai-search}" th:text="#{ai-search.tab}">
+                        AI employee search
+                    </a>
+                </li>
             </ul>
 
             <div class="d-flex align-items-center ms-auto gap-3">
                 <span class="text-white" sec:authentication="name"></span>
+
+                <a class="btn btn-outline-light d-inline-flex align-items-center justify-content-center"
+                   style="width: 46px; height: 38px"
+                   th:href="@{/settings/ai}"
+                   th:title="#{ai-setting.tab}"
+                   th:aria-label="#{ai-setting.tab}"
+                   sec:authorize="hasRole('MANAGER')">
+                    <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                    <span class="visually-hidden" th:text="#{ai-setting.tab}">AI settings</span>
+                </a>
 
                 <div class="dropdown">
                     <button class="btn btn-outline-light dropdown-toggle"

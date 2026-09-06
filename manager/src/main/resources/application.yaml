@@ -32,6 +32,10 @@ management:
       show-details: always
 
 app:
+  ai:
+    litellm:
+      base-url: ${LITELLM_BASE_URL:http://localhost:4000}
+      api-key: ${LITELLM_API_KEY}
   jwt:
     secret: "otusotusotusotusotusotusotusotus"
     expiration-times: 30m
