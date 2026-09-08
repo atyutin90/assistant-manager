@@ -51,5 +51,5 @@ public interface StaffEvaluationAnswerRepository extends JpaRepository<StaffEval
         FROM ranked_answers
         WHERE answer_rank = 1
         """, nativeQuery = true)
-    List<LatestAnswerProjection> findLatestPositiveAnswers(@Param("questionIds") Set<Long> questionIds);
+    List<LatestAnswerProjection> findLatestPositiveAnswers(@Param("questionIds") List<Long> questionIds);
 }

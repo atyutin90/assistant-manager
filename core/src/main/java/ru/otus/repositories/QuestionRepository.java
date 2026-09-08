@@ -24,7 +24,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long>, JpaSp
     Page<Question> findAll(@Nullable Specification<Question> spec, Pageable pageable);
 
     @EntityGraph(value = QUESTION_GRAPH)
-    List<Question> findAllByOrderByIdAsc();
+    List<Question> findAllByProjectRoleIdInOrderByIdAsc(List<Long> projectRole);
 
     @EntityGraph(value = QUESTION_GRAPH)
     @Override

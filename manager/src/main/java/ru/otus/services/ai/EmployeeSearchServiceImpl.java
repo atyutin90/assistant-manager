@@ -1,6 +1,7 @@
 package ru.otus.services.ai;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import ru.otus.dto.AiEmployeeMatch;
 import ru.otus.dto.AiModelSearchResult;
@@ -43,6 +44,8 @@ public class EmployeeSearchServiceImpl implements EmployeeSearchService {
 
     private final UserRepository userRepository;
 
+    private final MessageSource messageSource;
+
     @Override
     public List<AiProjectRoleCandidate> findProjectRoles() {
         return projectRoleRepository.findAllByOrderByPositionAsc().stream()
@@ -56,10 +59,9 @@ public class EmployeeSearchServiceImpl implements EmployeeSearchService {
     }
 
     @Override
-    public List<AiQuestionCandidate> findQuestionsByProjectRoles(Set<Long> projectRoleIds) {
+    public List<AiQuestionCandidate> findQuestionsByProjectRoles(List<Long> projectRoleIds) {
         if (isNotEmpty(projectRoleIds)) {
-            return questionRepository.findAllByOrderByIdAsc().stream()
-                .filter(question -> hasAnyRole(question, projectRoleIds))
+            return questionRepository.findAllByProjectRoleIdInOrderByIdAsc(projectRoleIds).stream()
                 .map(question ->
                     AiQuestionCandidate.builder()
                         .id(question.getId())
@@ -72,8 +74,8 @@ public class EmployeeSearchServiceImpl implements EmployeeSearchService {
     }
 
     @Override
-    public List<AiEmployeeMatch> findEmployees(Set<Long> questionIds, boolean matchAll) {
-        var uniqueQuestionIds = isNotEmpty(questionIds) ? questionIds : Set.<Long>of();
+    public List<AiEmployeeMatch> findEmployees(List<Long> questionIds, boolean matchAll) {
+        var uniqueQuestionIds = isNotEmpty(questionIds) ? questionIds : List.<Long>of();
         var employeeAnswers = staffEvaluationAnswerRepository.findLatestPositiveAnswers(uniqueQuestionIds);
         var answersByEmployeeMap = employeeAnswers.stream()
             .collect(groupingBy(
@@ -141,7 +143,7 @@ public class EmployeeSearchServiceImpl implements EmployeeSearchService {
         return question.getProjectRole() != null && roleIds.contains(question.getProjectRole().getId());
     }
 
-    private static boolean matchesAll(List<LatestAnswerProjection> answers, Set<Long> questionIds) {
+    private static boolean matchesAll(List<LatestAnswerProjection> answers, List<Long> questionIds) {
         var matchedIds = answers.stream()
             .map(LatestAnswerProjection::questionId)
             .collect(toSet());

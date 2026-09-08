@@ -1,19 +1,19 @@
 package ru.otus.services.ai.tools;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 import ru.otus.dto.AiEmployeeMatch;
-import ru.otus.dto.AiProjectRoleCandidate;
 import ru.otus.dto.AiQuestionCandidate;
 import ru.otus.services.ai.EmployeeSearchService;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmployeeSearchTools {
@@ -21,22 +21,15 @@ public class EmployeeSearchTools {
     private final EmployeeSearchService employeeSearchService;
 
     @Tool(description = """
-        Return all existing enabled project roles. Always call this tool before findQuestionsByProjectRoles.
-        Choose only roles that fit the user's employee request. If no role can be determined, use an empty list.
-        """)
-    public List<AiProjectRoleCandidate> findProjectRoles() {
-        return employeeSearchService.findProjectRoles();
-    }
-
-    @Tool(description = """
-        Return all questionnaire questions for the selected project roles. Call it after findProjectRoles.
+        Return all questionnaire questions for the selected project roles.
         The model itself must select question IDs whose meaning matches the user's requirements.
-        Pass only role IDs returned by findProjectRoles, or an empty list when the role is unknown.
+        Pass only role IDs from the project role catalog in the system prompt, or an empty list when the role is unknown.
         """)
     public List<AiQuestionCandidate> findQuestionsByProjectRoles(
-        @ToolParam(description = "Suitable project role IDs from findProjectRoles; empty if role is unknown")
-        Set<Long> projectRoleIds
+        @ToolParam(description = "Suitable IDs from the project role catalog; empty if the role is unknown")
+        List<Long> projectRoleIds
     ) {
+        log.info("Finding questions by project roles by employee request. " + projectRoleIds);
         return employeeSearchService.findQuestionsByProjectRoles(projectRoleIds);
     }
 
@@ -47,11 +40,12 @@ public class EmployeeSearchTools {
         """)
     public List<AiEmployeeMatch> findEmployees(
         @ToolParam(description = "Relevant question IDs selected from findQuestionsByProjectRoles")
-        Set<Long> questionIds,
+        List<Long> questionIds,
         @ToolParam(description = "True if the employee must match every question; false to match any question")
         boolean matchAll
     ) {
-        var safeQuestionIds = isNotEmpty(questionIds) ? questionIds : Set.<Long>of();
+        log.info("Find employees by project roles by employee request. " + questionIds + " and " + matchAll);
+        var safeQuestionIds = isNotEmpty(questionIds) ? questionIds : List.<Long>of();
         return employeeSearchService.findEmployees(safeQuestionIds, matchAll);
     }
 }
