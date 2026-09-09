@@ -6,7 +6,7 @@ public interface ManagerAiSettingService {
 
     AiManagerSettingForm findSetting(Long managerId);
 
-    boolean hasSetting(Long managerId);
+    boolean hasSetting(String managerUsername);
 
     boolean hasApiKey(Long managerId, AiManagerSettingForm form);
 

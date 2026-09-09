@@ -95,16 +95,6 @@ public class UserTechnologyPageController implements UserTechnologyController {
         return "redirect:/technologies";
     }
 
-    @PostMapping("/technologies/{id}/level")
-    public String changeLevel(@PathVariable Long id,
-                              @RequestParam TechnologyLevel level,
-                              @CurrentUserParam CurrentUser currentUser,
-                              RedirectAttributes redirectAttributes) {
-        userTechnologyService.changeLevel(currentUser.id(), id, level);
-        redirectAttributes.addFlashAttribute("technologyLevelSaved", true);
-        return "redirect:/technologies";
-    }
-
     @DeleteMapping("/technologies/{id}/delete")
     public String delete(@PathVariable Long id,
                          @CurrentUserParam CurrentUser currentUser,

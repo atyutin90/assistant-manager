@@ -9,6 +9,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.otus.services.JwtService;
 import ru.otus.services.UserService;
+import ru.otus.services.ai.ManagerAiSettingService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,6 +28,9 @@ class HomePageControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private ManagerAiSettingService managerAiSettingService;
 
     @Test
     @DisplayName("главная страница должна отображаться")

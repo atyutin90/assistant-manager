@@ -41,8 +41,8 @@ public class ManagerAiSettingServiceImpl implements ManagerAiSettingService {
     }
 
     @Override
-    public boolean hasSetting(Long managerId) {
-        return managerAiSettingRepository.findByManagerId(managerId).isPresent();
+    public boolean hasSetting(String managerUsername) {
+        return managerAiSettingRepository.existsByManagerUsername(managerUsername);
     }
 
     @Override

@@ -20,6 +20,7 @@ import ru.otus.dto.UserDto;
 import ru.otus.entity.enums.AnswerResponse;
 import ru.otus.services.CareerLevelService;
 import ru.otus.services.JwtService;
+import ru.otus.services.ai.ManagerAiSettingService;
 import ru.otus.services.employee.ManagerEmployeeService;
 import ru.otus.services.staffevaluation.ManagerStaffEvaluationService;
 import ru.otus.services.ProjectRoleService;
@@ -80,6 +81,9 @@ class ManagerEmployeePageControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private ManagerAiSettingService managerAiSettingService;
 
     @BeforeEach
     void setUpCurrentUser() {

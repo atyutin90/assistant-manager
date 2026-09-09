@@ -18,6 +18,7 @@ import ru.otus.dto.ProjectQuestionsForm;
 import ru.otus.dto.UserDto;
 import ru.otus.services.CareerLevelService;
 import ru.otus.services.JwtService;
+import ru.otus.services.ai.ManagerAiSettingService;
 import ru.otus.services.ProjectRoleService;
 import ru.otus.services.csv.ProjectQuestionCsvService;
 import ru.otus.services.project.ProjectService;
@@ -78,6 +79,9 @@ class ProjectQuestionPageControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private ManagerAiSettingService managerAiSettingService;
 
     @BeforeEach
     void setUpCurrentUser() {

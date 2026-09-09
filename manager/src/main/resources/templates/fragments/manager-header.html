@@ -28,8 +28,8 @@
                         Employees
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/employees/ai-search}" th:text="#{ai-search.tab}">
+                <li class="nav-item" th:if="${aiSearchAvailable}">
+                    <a class="nav-link" th:href="@{/employees/search}" th:text="#{ai-search.tab}">
                         AI employee search
                     </a>
                 </li>

@@ -15,6 +15,7 @@ import ru.otus.dto.ProjectManagerDto;
 import ru.otus.dto.UserDto;
 import ru.otus.dto.filter.ProjectFilter;
 import ru.otus.services.JwtService;
+import ru.otus.services.ai.ManagerAiSettingService;
 import ru.otus.services.project.ProjectService;
 import ru.otus.services.UserService;
 
@@ -59,6 +60,9 @@ class ProjectPageControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private ManagerAiSettingService managerAiSettingService;
 
     @BeforeEach
     void setUpCurrentUser() {

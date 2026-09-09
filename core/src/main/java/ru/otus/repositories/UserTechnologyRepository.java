@@ -10,6 +10,8 @@ import org.springframework.stereotype.Repository;
 import ru.otus.entity.UserTechnology;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static ru.otus.entity.UserTechnology.USER_TECHNOLOGY_GRAPH;
@@ -23,6 +25,12 @@ public interface UserTechnologyRepository extends JpaRepository<UserTechnology, 
     Page<UserTechnology> findAll(@Nullable Specification<UserTechnology> spec, Pageable pageable);
 
     Optional<UserTechnology> findByTechnologyIdAndUserId(Long id, Long userId);
+
+    @EntityGraph(value = USER_TECHNOLOGY_GRAPH)
+    List<UserTechnology> findByUserIdOrderByTechnologyNameAsc(Long userId);
+
+    @EntityGraph(value = USER_TECHNOLOGY_GRAPH)
+    List<UserTechnology> findByTechnologyIdInAndTechnologyEnabledTrue(Collection<Long> technologyIds);
 
     boolean existsByUserIdAndTechnologyId(Long userId, Long technologyId);
 

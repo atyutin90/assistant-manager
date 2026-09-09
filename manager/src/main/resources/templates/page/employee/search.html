@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/manager-head :: head}"></div>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/manager-header :: manager-header}"></div>
+
+<main class="container-fluid flex-grow-1 d-flex flex-column px-2 px-lg-3 py-2">
+    <div class="mb-2">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+            <h1 class="h5 mb-0" th:text="#{ai-search.title}">AI employee search</h1>
+            <button id="clear-chat-history"
+                    class="btn btn-outline-danger btn-sm"
+                    type="button"
+                    disabled
+                    th:title="#{ai-search.clear-history}"
+                    th:aria-label="#{ai-search.clear-history}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <p class="text-muted small mb-0" th:text="#{ai-search.description}">
+            Describe the required experience or skills
+        </p>
+    </div>
+
+    <section class="card border-0 shadow-sm overflow-hidden flex-grow-1"
+             id="ai-chat"
+             th:data-welcome="#{ai-search.welcome}"
+             th:data-error="#{ai-search.error}"
+             th:data-empty="#{ai-search.empty-message}"
+             th:data-response-time="#{ai-search.response-time}"
+             th:data-seconds="#{ai-search.seconds}">
+        <div id="chat-messages"
+             class="card-body bg-white d-flex flex-column gap-2 overflow-auto p-2 small lh-sm"
+             style="height: calc(100vh - 230px); min-height: 320px"
+             aria-live="polite">
+        </div>
+
+        <form id="chat-form" class="card-footer bg-light p-2">
+            <div class="input-group input-group-sm">
+                <textarea id="chat-input"
+                          class="form-control"
+                          rows="2"
+                          maxlength="2000"
+                          th:placeholder="#{ai-search.placeholder}"
+                          th:aria-label="#{ai-search.placeholder}"></textarea>
+                <button id="chat-submit"
+                        class="btn btn-primary px-4"
+                        th:title="#{ai-search.send}"
+                        th:aria-label="#{save}"
+                        onclick="callSearch()"
+                        type="button">
+                    <i class="fas fa-paper-plane me-1"></i>
+                </button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="module" th:src="@{/js/page/employee/search.js}"></script>
+</body>
+</html>

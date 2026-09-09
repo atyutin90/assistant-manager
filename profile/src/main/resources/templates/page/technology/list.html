@@ -24,8 +24,18 @@
     </div>
 
     <div th:replace="~{fragments/success-operation-message :: infoMessage(${technologySaved}, #{profile.technology-saved})}"></div>
-    <div th:replace="~{fragments/success-operation-message :: infoMessage(${technologyLevelSaved}, #{profile.technology-level-saved})}"></div>
     <div th:replace="~{fragments/success-operation-message :: infoMessage(${technologyDeleted}, #{profile.technology-deleted})}"></div>
+    <div id="technology-level-saved-message"
+         class="alert alert-success alert-dismissible d-none"
+         role="status"
+         aria-live="polite">
+        <span th:text="#{profile.technology-level-saved}">Technology level saved</span>
+        <button type="button"
+                class="btn-close"
+                data-technology-level-saved-message-close
+                th:aria-label="#{cancel}">
+        </button>
+    </div>
 
     <form class="mb-3" method="get" th:action="@{/technologies}">
         <div>
@@ -99,9 +109,13 @@
                     <div class="d-inline-flex">
                         <form method="post"
                               th:id="|change-level-${technology.id}|"
-                              th:action="@{/technologies/{id}/level(id=${technology.technologyId})}">
+                              th:action="@{/technologies/{id}/level(id=${technology.technologyId})}"
+                              th:data-api-url="@{/api/technologies/{id}/level(id=${technology.technologyId})}"
+                              th:data-save-error="#{profile.technology-level-save-error}">
                             <button class="btn btn-outline-success btn-sm"
                                     type="submit"
+                                    data-technology-level-save
+                                    disabled
                                     th:title="#{save}"
                                     th:aria-label="#{save}">
                                 <i class="fas fa-floppy-disk"></i>
@@ -129,6 +143,7 @@
 
 <div class="modal fade"
      id="addTechnologiesModal"
+     th:data-show="${modal}"
      tabindex="-1"
      aria-labelledby="addTechnologiesModalLabel"
      aria-hidden="true">
@@ -220,20 +235,6 @@
 </div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
-<script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', function () {
-        const modalElement = document.getElementById('addTechnologiesModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-        if (/*[[${modal}]]*/ false) {
-            modal.show();
-        }
-        modalElement.addEventListener('hidden.bs.modal', function () {
-            if (window.location.search) {
-                window.location.href = window.location.pathname;
-            }
-        });
-
-    });
-</script>
+<script type="module" th:src="@{/js/page/technology/list.js}"></script>
 </body>
 </html>

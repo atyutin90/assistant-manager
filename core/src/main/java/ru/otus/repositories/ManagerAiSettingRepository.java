@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface ManagerAiSettingRepository extends JpaRepository<ManagerAiSetting, Long> {
 
     Optional<ManagerAiSetting> findByManagerId(Long managerId);
+
+    boolean existsByManagerUsername(String managerUsername);
 }
