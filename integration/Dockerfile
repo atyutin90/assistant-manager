@@ -1,4 +1,4 @@
-FROM gradle:9.3.0-jdk17 AS builder
+FROM gradle:9.3.0-jdk25 AS builder
 
 WORKDIR /home/gradle/project
 
@@ -19,7 +19,7 @@ COPY --chown=gradle:gradle integration/src ./integration/src
 
 RUN gradle :integration:bootJar -x test --no-daemon
 
-FROM bellsoft/liberica-openjdk-alpine:17
+FROM bellsoft/liberica-openjdk-alpine:25
 
 WORKDIR /opt/project
 

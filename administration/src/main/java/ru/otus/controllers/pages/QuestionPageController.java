@@ -110,8 +110,14 @@ public class QuestionPageController implements DownloadPageController {
     }
 
     @PostMapping("/questions/upload")
-    public String upload(@RequestParam("file") MultipartFile file) {
-        csvService.uploadQuestions(file);
+    public String upload(@RequestParam("file") MultipartFile file,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            csvService.uploadQuestions(file);
+            redirectAttributes.addFlashAttribute(SUCCESS_OPERATION, true);
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute(ERROR, ex.getMessage());
+        }
         return "redirect:/questions";
     }
 

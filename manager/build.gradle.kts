@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.commons.collections4)
     implementation(libs.opencsv)
     implementation(libs.commons.io)
+    implementation(libs.juniversalchardet)
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     testImplementation(libs.spring.boot.starter.test)

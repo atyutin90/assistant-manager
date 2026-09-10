@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.mozilla.universalchardet.UniversalDetector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Sort;
@@ -90,7 +91,11 @@ public class CsvServiceImpl implements CsvService {
                 modifyUploadQuestions(uploadQuestions, questions);
                 questionRepository.saveAll(uploadQuestions);
             } catch (Exception e) {
-                throw new UploadFileException(messageSource.getMessage("error.upload-data", null, getLocale()), e);
+                if (e instanceof UploadFileException) {
+                    throw (UploadFileException) e;
+                } else {
+                    throw new UploadFileException(messageSource.getMessage("error.upload-data", null, getLocale()), e);
+                }
             }
         }
     }
@@ -99,8 +104,7 @@ public class CsvServiceImpl implements CsvService {
     @Override
     public void uploadUsers(MultipartFile file) {
         if (file != null && !file.isEmpty()) {
-            try (var reader = bufferedReaderOf(file)
-            ) {
+            try (var reader = bufferedReaderOf(file)) {
                 List<CsvUserDto> csvEmployees = new CsvToBeanBuilder<CsvUserDto>(reader)
                     .withType(CsvUserDto.class)
                     .withSeparator(';')
@@ -161,7 +165,18 @@ public class CsvServiceImpl implements CsvService {
             .map(this::csvTechnologyOf).toList();
     }
 
-    private static BufferedReader bufferedReaderOf(MultipartFile file) throws IOException {
+    private BufferedReader bufferedReaderOf(MultipartFile file) throws IOException {
+        try (var inputStream = file.getInputStream()) {
+            var detectedCharset = UniversalDetector.detectCharset(inputStream);
+            if (!UTF_8.displayName().equals(detectedCharset)) {
+                throw new UploadFileException(
+                    messageSource.getMessage(
+                        "error.upload-data-incorrect-charset",
+                        new Object[]{detectedCharset},
+                        getLocale())
+                );
+            }
+        }
         return new BufferedReader(
             new InputStreamReader(BOMInputStream.builder().setInputStream(file.getInputStream()).get(), UTF_8));
     }

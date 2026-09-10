@@ -5,6 +5,7 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.mozilla.universalchardet.UniversalDetector;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -88,10 +89,12 @@ public class ProjectQuestionCsvServiceImpl implements ProjectQuestionCsvService 
             synchronize(projectId, rows);
         } catch (WebApplicationException ex) {
             throw ex;
-        } catch (Exception ex) {
-            throw new UploadFileException(
-                messageSource.getMessage("error.upload-data", new Object[]{}, getLocale()), ex
-            );
+        } catch (Exception e) {
+            if (e instanceof UploadFileException) {
+                throw (UploadFileException) e;
+            } else {
+                throw new UploadFileException(messageSource.getMessage("error.upload-data", null, getLocale()), e);
+            }
         }
     }
 
@@ -200,7 +203,18 @@ public class ProjectQuestionCsvServiceImpl implements ProjectQuestionCsvService 
         return StringUtils.isNotEmpty(value) ? value.trim() : EMPTY;
     }
 
-    private static BufferedReader bufferedReaderOf(MultipartFile file) throws IOException {
+    private BufferedReader bufferedReaderOf(MultipartFile file) throws IOException {
+        try (var inputStream = file.getInputStream()) {
+            var detectedCharset = UniversalDetector.detectCharset(inputStream);
+            if (!UTF_8.displayName().equals(detectedCharset)) {
+                throw new UploadFileException(
+                    messageSource.getMessage(
+                        "error.upload-data-incorrect-charset",
+                        new Object[]{detectedCharset},
+                        getLocale())
+                );
+            }
+        }
         return new BufferedReader(
             new InputStreamReader(BOMInputStream.builder().setInputStream(file.getInputStream()).get(), UTF_8)
         );

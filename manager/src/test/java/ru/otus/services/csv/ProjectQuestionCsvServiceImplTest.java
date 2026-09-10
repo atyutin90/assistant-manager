@@ -142,8 +142,13 @@ class ProjectQuestionCsvServiceImplTest {
             .build();
     }
 
+    /**
+     * Данные должны содержать хотя бы один не-ASCII символ, иначе
+     * {@link org.mozilla.universalchardet.UniversalDetector} определит кодировку как US-ASCII
+     * и сервис отклонит файл как не-UTF-8.
+     */
     private static String csv() {
         return "uuid;project-role;skill;area-knowledge;section;text;career-level\n"
-            + "UUID;DEV;JAVA;Core;Basics;Question;INTERN\n";
+            + "UUID;DEV;JAVA;Core;Basics;Вопрос про Java;INTERN\n";
     }
 }

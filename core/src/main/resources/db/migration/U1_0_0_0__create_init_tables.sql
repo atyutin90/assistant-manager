@@ -1,3 +1,4 @@
+DROP TABLE employee_search_history
 DROP TABLE manager_ai_settings
 DROP TABLE assessment_project_access;
 DROP TABLE assessment_project_question;
