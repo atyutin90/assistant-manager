@@ -7,9 +7,9 @@ services:
     ports:
       - "8889:8889"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-otus:5432/assistant_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-otus:29092
     depends_on:
       - postgres
@@ -23,9 +23,9 @@ services:
     ports:
       - "8890:8890"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/assistant_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       - postgres
 
@@ -37,9 +37,11 @@ services:
     ports:
       - "8891:8891"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/assistant_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - LITELLM_BASE_URL=http://litellm:4000
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY}
     depends_on:
       - postgres
       - litellm
@@ -49,14 +51,14 @@ services:
     image: ghcr.io/berriai/litellm:main-latest
     command: [ "--config", "/app/config.yaml", "--port", "4000" ]
     ports:
-      - "4000:4000"
+      - "4100:4000"
     volumes:
       - ./manager/litellm-config.yaml:/app/config.yaml:ro
     environment:
       - UI_USERNAME=${LITELLM_UI_USERNAME:-admin}
       - UI_PASSWORD=${LITELLM_UI_PASSWORD}
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
-      - LITELLM_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - LITELLM_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB_LITE_LLM}
     depends_on:
       - postgres
 
