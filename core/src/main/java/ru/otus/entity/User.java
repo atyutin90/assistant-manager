@@ -34,8 +34,8 @@ import static ru.otus.entity.User.USER_GRAPH;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"roles", "projectRoles", "currentLevel", "responsibles"})
-@ToString(exclude = {"roles", "projectRoles", "currentLevel", "responsibles"})
+@EqualsAndHashCode(exclude = {"roles", "projectRoles", "currentLevel", "responsibles", "password"})
+@ToString(exclude = {"roles", "projectRoles", "currentLevel", "responsibles", "password"})
 @Table(name = "users")
 @Builder
 @NoArgsConstructor

@@ -112,7 +112,8 @@ public class CsvServiceImpl implements CsvService {
                     .build()
                     .parse();
                 var uploadUsers = csvEmployees.stream().map(this::userOf).toList();
-                var users = userRepository.findAll();
+                var usernames = uploadUsers.stream().map(User::getUsername).collect(toSet());
+                var users = userRepository.findByUsernameIn(usernames);
                 modifyUploadUsers(uploadUsers, users);
                 userRepository.saveAll(uploadUsers);
             } catch (Exception e) {

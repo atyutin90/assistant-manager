@@ -38,6 +38,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> findAllById(Iterable<Long> ids);
 
     @EntityGraph(value = USER_ALL_GRAPH)
+    List<User> findByUsernameIn(Iterable<String> usernames);
+
+    @EntityGraph(value = USER_ALL_GRAPH)
     Optional<User> findByUsername(String username);
 
     @EntityGraph(value = USER_ALL_GRAPH)

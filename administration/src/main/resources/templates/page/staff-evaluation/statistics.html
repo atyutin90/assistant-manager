@@ -80,7 +80,7 @@
             </thead>
             <tbody>
             <tr th:if="${statistics.isEmpty()}">
-                <td colspan="5" class="text-center text-muted py-4" th:text="#{staff-evaluation.statistics-empty}">No data</td>
+                <td colspan="6" class="text-center text-muted py-4" th:text="#{staff-evaluation.statistics-empty}">No data</td>
             </tr>
             <tr th:each="item : ${statistics.content}">
                 <td th:text="${item.lastName}">Last name</td>
