@@ -25,7 +25,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        var adminUsernames = List.of(Pair.of("admin", "admin"));
+        var adminUsernames = List.of(Pair.of("admin", "nimda"));
 
         adminUsernames.forEach(username -> {
             var user = userRepository.findByUsername(username.getKey());

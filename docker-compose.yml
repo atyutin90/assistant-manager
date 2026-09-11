@@ -7,13 +7,12 @@ services:
     ports:
       - "8889:8889"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_URL=${POSTGRES_DB_URL}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-otus:29092
-    depends_on:
-      - postgres
-      - kafka
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - APP_DEFAULT_PASSWORD=${APP_DEFAULT_PASSWORD}
+      #- SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-otus:29092
 
   profile:
     container_name: assistant-profile
@@ -23,11 +22,11 @@ services:
     ports:
       - "8890:8890"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_URL=${POSTGRES_DB_URL}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-    depends_on:
-      - postgres
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - APP_DEFAULT_PASSWORD=${APP_DEFAULT_PASSWORD}
 
   manager:
     container_name: assistant-manager
@@ -37,13 +36,14 @@ services:
     ports:
       - "8891:8891"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_URL=${POSTGRES_DB_URL}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - APP_DEFAULT_PASSWORD=${APP_DEFAULT_PASSWORD}
       - LITELLM_BASE_URL=http://litellm:4000
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY}
     depends_on:
-      - postgres
       - litellm
 
   litellm:
@@ -58,12 +58,12 @@ services:
       - UI_USERNAME=${LITELLM_UI_USERNAME:-admin}
       - UI_PASSWORD=${LITELLM_UI_PASSWORD}
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
-      - LITELLM_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB_LITE_LLM}
-    depends_on:
-      - postgres
+      - LITELLM_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_DB_LITE_LLM_URL}
 
   integration:
     container_name: assistant-integration
+    profiles:
+      - disabled
     build:
       context: .
       dockerfile: integration/Dockerfile
@@ -78,6 +78,8 @@ services:
   postgres:
     container_name: postgres-otus
     image: "postgres:17"
+    profiles:
+      - disabled
     ports:
       - "5433:5432"
     environment:
@@ -88,6 +90,8 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:6.2.0
     container_name: zookeeper-otus
+    profiles:
+      - disabled
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -95,6 +99,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.0.0
     container_name: kafka-otus
+    profiles:
+      - disabled
     ports:
       - "9092:9092"
     depends_on:
@@ -111,6 +117,8 @@ services:
   kafka-ui:
     container_name: kafka-ui-otus
     image: provectuslabs/kafka-ui:latest
+    profiles:
+      - disabled
     ports:
       - 8082:8080
     environment:
@@ -119,6 +127,8 @@ services:
   mailpit:
     container_name: mailpit
     image: axllent/mailpit:v1.27.8
+    profiles:
+      - disabled
     ports:
       - "1025:1025"
       - "8025:8025"

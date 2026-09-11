@@ -40,5 +40,5 @@ app:
     secret: "otusotusotusotusotusotusotusotus"
     expiration-times: 30m
     cookie-name: MANAGER_JWT_TOKEN
-    secure-cookie: true
+    secure-cookie: false
   default-password: "1111"
